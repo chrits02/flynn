@@ -2,7 +2,7 @@ import * as React from 'react';
 import useClient from './useClient';
 import useMergeDispatch from './useMergeDispatch';
 import { setNameFilters, setPageSize, setStreamCreates, setStreamUpdates, setDeploymentStatusFilters } from './client';
-import { Release, ExpandedDeployment, DeploymentStatus, StreamDeploymentsResponse } from './generated/controller_pb';
+import { Release, DeploymentStatus, StreamDeploymentsResponse } from './generated/controller_pb';
 
 export enum ActionType {
 	SET_RELEASE = 'useAppRelease__SET_RELEASE',
@@ -74,34 +74,58 @@ export function useAppReleaseWithDispatch(appName: string, callerDispatch: Dispa
 	const client = useClient();
 	const [, localDispatch] = React.useReducer(reducer, initialState());
 	const dispatch = useMergeDispatch(localDispatch, callerDispatch, false);
-	React.useEffect(
-		() => {
-			const cancel = client.streamDeployments(
-				(res: StreamDeploymentsResponse, error: Error | null) => {
-					if (error) {
-						dispatch([{ type: ActionType.SET_ERROR, error }, { type: ActionType.SET_LOADING, loading: false }]);
-						return;
-					}
-					const deployment = res.getDeploymentsList()[0] || new ExpandedDeployment();
-					if (deployment.getStatus() !== DeploymentStatus.COMPLETE) {
-						return;
-					}
+	React.useEffect(() => {
+		let unary = true;
+		let streamCancel = () => {};
+		const callback = (res: StreamDeploymentsResponse, error: Error | null) => {
+			if (error) {
+				dispatch([
+					{ type: ActionType.SET_ERROR, error },
+					{ type: ActionType.SET_LOADING, loading: false }
+				]);
+				return;
+			}
+			const deployment = res.getDeploymentsList()[0];
+			if (deployment) {
+				if (deployment.getStatus() === DeploymentStatus.COMPLETE) {
 					dispatch([
 						{ type: ActionType.SET_RELEASE, release: deployment.getNewRelease() || new Release() },
 						{ type: ActionType.SET_ERROR, error: null },
 						{ type: ActionType.SET_LOADING, loading: false }
 					]);
-				},
-				setNameFilters(appName),
-				setDeploymentStatusFilters(DeploymentStatus.COMPLETE),
-				setPageSize(1),
-				setStreamCreates(),
-				setStreamUpdates()
-			);
-			return cancel;
-		},
-		[appName, client, dispatch]
-	);
+				}
+			} else {
+				dispatch([
+					{ type: ActionType.SET_RELEASE, release: new Release() },
+					{ type: ActionType.SET_ERROR, error: null },
+					{ type: ActionType.SET_LOADING, loading: false }
+				]);
+			}
+
+			if (unary) {
+				unary = false;
+				streamCancel = client.streamDeployments(
+					callback,
+					setNameFilters(appName),
+					setDeploymentStatusFilters(DeploymentStatus.COMPLETE),
+					setPageSize(1),
+					setStreamCreates(),
+					setStreamUpdates()
+				);
+			}
+		};
+		const cancel = () => {
+			unaryCancel();
+			streamCancel();
+		};
+		const unaryCancel = client.streamDeployments(
+			callback,
+			setNameFilters(appName),
+			setDeploymentStatusFilters(DeploymentStatus.COMPLETE),
+			setPageSize(1)
+		);
+		return cancel;
+	}, [appName, client, dispatch]);
 }
 
 export default function useAppRelease(appName: string) {

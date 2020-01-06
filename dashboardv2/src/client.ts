@@ -680,8 +680,14 @@ class _Client implements Client {
 			},
 			mergeResponses: mergeStreamDeploymentResponses
 		});
+		let hasData = false;
 		stream.on('data', (response: StreamDeploymentsResponse) => {
+			hasData = true;
 			cb(response, null);
+		});
+		stream.on('end', (status?: Status) => {
+			if (hasData) return;
+			cb(new StreamDeploymentsResponse(), null);
 		});
 		if (lastResponse) {
 			cb(lastResponse, null);

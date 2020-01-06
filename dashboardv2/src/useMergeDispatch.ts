@@ -29,9 +29,7 @@ export default function useMergeDispatch<Action>(
 						isActionType<ReleaseAction>(ReleaseActionType, action) ||
 						isActionType<ReleaseHistoryAction>(ReleaseHistoryActionType, action)
 					) {
-						// TODO(jvatic): useAppScales
 						// TODO(jvatic): useAppsList
-						// TODO(jvatic): useDeployments
 						return false;
 					}
 					return true;

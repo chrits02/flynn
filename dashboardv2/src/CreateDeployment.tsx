@@ -98,7 +98,7 @@ function initialState(props: Props): State {
 		nextReleaseState: initialReleaseState(),
 
 		isCreating: false,
-		isScaleToZeroConfirmed: false
+		isScaleToZeroConfirmed: props.newScale ? false : true
 	};
 }
 

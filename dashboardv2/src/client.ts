@@ -440,6 +440,51 @@ function memoizedStream<T>(
 	return [s, undefined];
 }
 
+function retryStream<T>(init: () => ResponseStream<T>): ResponseStream<T> {
+	let nRetries = 0;
+	const maxRetires = 3;
+	let retryTimeoutMs = 1000;
+	let retryTimeoutId: ReturnType<typeof setTimeout>;
+
+	let stream = init();
+	let handlers = new Map<'data' | 'status' | 'end', Function[]>();
+	const on = (typ: 'data' | 'status' | 'end', handler: Function): ResponseStream<T> => {
+		handlers.set(typ, (handlers.get(typ) || []).concat([handler]));
+		stream.on(typ as any, handler as any);
+		return stream;
+	};
+	const retryOnEnd = (status?: Status) => {
+		if (status && status.code === grpc.Code.Unknown) {
+			// reconnect retry handler unless maxRetries reached
+			if (nRetries++ <= maxRetires) {
+				retryTimeoutId = setTimeout(() => {
+					// retry
+					stream = init();
+
+					// reconnect event handlers
+					handlers.forEach((fns, typ) => {
+						fns.forEach((handler) => {
+							on(typ, handler);
+						});
+					});
+
+					stream.on('end', retryOnEnd);
+				}, retryTimeoutMs);
+				retryTimeoutMs += 10000;
+			}
+		}
+	};
+	stream.on('end', retryOnEnd);
+
+	return {
+		on,
+		cancel: () => {
+			clearTimeout(retryTimeoutId);
+			stream.cancel();
+		}
+	};
+}
+
 function mergeStreamScalesResponses(
 	prev: StreamScalesResponse | null,
 	res: StreamScalesResponse
@@ -562,9 +607,11 @@ class _Client implements Client {
 		const streamKey = reqModifiers.map((m) => m.key).join(':');
 		const [stream, lastResponse] = memoizedStream('streamApps', streamKey, {
 			init: () => {
-				const req = new StreamAppsRequest();
-				reqModifiers.forEach((m) => m(req));
-				return this._cc.streamApps(req, this.metadata());
+				return retryStream(() => {
+					const req = new StreamAppsRequest();
+					reqModifiers.forEach((m) => m(req));
+					return this._cc.streamApps(req, this.metadata());
+				});
 			},
 			mergeResponses: (prev: StreamAppsResponse | null, res: StreamAppsResponse): StreamAppsResponse => {
 				const appIndices = new Map<string, number>();
@@ -607,9 +654,11 @@ class _Client implements Client {
 		const streamKey = reqModifiers.map((m) => m.key).join(':');
 		const [stream, lastResponse] = memoizedStream('streamReleases', streamKey, {
 			init: () => {
-				const req = new StreamReleasesRequest();
-				reqModifiers.forEach((m) => m(req));
-				return this._cc.streamReleases(req, this.metadata());
+				return retryStream(() => {
+					const req = new StreamReleasesRequest();
+					reqModifiers.forEach((m) => m(req));
+					return this._cc.streamReleases(req, this.metadata());
+				});
 			},
 			mergeResponses: (prev: StreamReleasesResponse | null, res: StreamReleasesResponse): StreamReleasesResponse => {
 				const releaseIndices = new Map<string, number>();
@@ -649,9 +698,11 @@ class _Client implements Client {
 		const streamKey = reqModifiers.map((m) => m.key).join(':');
 		const [stream, lastResponse] = memoizedStream('streamScales', streamKey, {
 			init: () => {
-				const req = new StreamScalesRequest();
-				reqModifiers.forEach((m) => m(req));
-				return this._cc.streamScales(req, this.metadata());
+				return retryStream(() => {
+					const req = new StreamScalesRequest();
+					reqModifiers.forEach((m) => m(req));
+					return this._cc.streamScales(req, this.metadata());
+				});
 			},
 			mergeResponses: mergeStreamScalesResponses
 		});
@@ -674,9 +725,11 @@ class _Client implements Client {
 		const streamKey = reqModifiers.map((m) => m.key).join(':');
 		const [stream, lastResponse] = memoizedStream('streamDeployments', streamKey, {
 			init: () => {
-				const req = new StreamDeploymentsRequest();
-				reqModifiers.forEach((m) => m(req));
-				return this._cc.streamDeployments(req, this.metadata());
+				return retryStream(() => {
+					const req = new StreamDeploymentsRequest();
+					reqModifiers.forEach((m) => m(req));
+					return this._cc.streamDeployments(req, this.metadata());
+				});
 			},
 			mergeResponses: mergeStreamDeploymentResponses
 		});
@@ -709,9 +762,11 @@ class _Client implements Client {
 
 		const cancelStreamScales = scaleReqModifiers
 			? ((reqModifiers: RequestModifier<StreamScalesRequest>[]) => {
-					const req = new StreamScalesRequest();
-					reqModifiers.forEach((m) => m(req));
-					const stream = this._cc.streamScales(req, this.metadata());
+					const stream = retryStream(() => {
+						const req = new StreamScalesRequest();
+						reqModifiers.forEach((m) => m(req));
+						return this._cc.streamScales(req, this.metadata());
+					});
 					stream.on('data', (res: StreamScalesResponse) => {
 						streamScalesRes = res;
 						if (streamReleaseHistoryRes) {
@@ -727,9 +782,11 @@ class _Client implements Client {
 
 		const cancelStreamDeployments = deploymentReqModifiers
 			? ((reqModifiers: RequestModifier<StreamDeploymentsRequest>[]) => {
-					const req = new StreamDeploymentsRequest();
-					reqModifiers.forEach((m) => m(req));
-					const stream = this._cc.streamDeployments(req, this.metadata());
+					const stream = retryStream(() => {
+						const req = new StreamDeploymentsRequest();
+						reqModifiers.forEach((m) => m(req));
+						return this._cc.streamDeployments(req, this.metadata());
+					});
 					stream.on('data', (res: StreamDeploymentsResponse) => {
 						streamDeploymentsRes = res;
 						if (streamReleaseHistoryRes) {

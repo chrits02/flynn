@@ -371,7 +371,7 @@ function mapHistory<T>({
 		if (item.isScaleRequest) {
 			const s = item.getScaleRequest();
 			date = roundedDate((s.getCreateTime() as timestamp_pb.Timestamp).toDate());
-			el = renderScale(_last(s.getName().split('/')), s, i);
+			el = renderScale(_last(s.getName().split('/')) + `-${s.getState()}`, s, i);
 		} else {
 			// it must be a deployment
 			const d = item.getDeployment();

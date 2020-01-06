@@ -33,12 +33,9 @@ export default function useRouter<TParams = {}>(): UseRouterObejct<TParams> {
 	const _history = useHistory();
 	const location = useLocation();
 	const match = useRouteMatch<TParams>();
-	const urlParams = React.useMemo(
-		() => {
-			return new URLSearchParams(location.search);
-		},
-		[location.search]
-	);
+	const urlParams = React.useMemo(() => {
+		return new URLSearchParams(location.search);
+	}, [location.search]);
 
 	// Checks if the next route will interfear with a protected component and
 	// confirms before navigating if that's the case
@@ -98,19 +95,16 @@ export default function useRouter<TParams = {}>(): UseRouterObejct<TParams> {
 
 	// Override the history object's push and replace to insert navigation
 	// protection layer
-	const history = React.useMemo(
-		() => {
-			return Object.assign({}, _history, {
-				push: (pathOrLocation: H.Path | H.LocationDescriptorObject, state?: H.LocationState): boolean => {
-					return handlePushOrReplace(_history.push.bind(_history), pathOrLocation, state);
-				},
-				replace: (pathOrLocation: H.Path | H.LocationDescriptorObject, state?: H.LocationState): boolean => {
-					return handlePushOrReplace(_history.replace.bind(_history), pathOrLocation, state);
-				}
-			});
-		},
-		[_history, handlePushOrReplace]
-	);
+	const history = React.useMemo(() => {
+		return Object.assign({}, _history, {
+			push: (pathOrLocation: H.Path | H.LocationDescriptorObject, state?: H.LocationState): boolean => {
+				return handlePushOrReplace(_history.push.bind(_history), pathOrLocation, state);
+			},
+			replace: (pathOrLocation: H.Path | H.LocationDescriptorObject, state?: H.LocationState): boolean => {
+				return handlePushOrReplace(_history.replace.bind(_history), pathOrLocation, state);
+			}
+		});
+	}, [_history, handlePushOrReplace]);
 
 	return {
 		urlParams,

@@ -10,6 +10,8 @@ export interface ClientProps {
 
 export default function withClient<P extends ClientProps>(Component: React.ComponentType<P>) {
 	return function ClientComponent(props: Omit<P, keyof ClientProps>) {
-		return <ClientContext.Consumer>{(client) => <Component {...props as P} client={client} />}</ClientContext.Consumer>;
+		return (
+			<ClientContext.Consumer>{(client) => <Component {...(props as P)} client={client} />}</ClientContext.Consumer>
+		);
 	};
 }

@@ -246,53 +246,50 @@ export function useReleaseHistoryWithDispatch(
 	if (deploymentReqModifiers.length === 0) {
 		deploymentReqModifiers = emptyDeploymentReqModifiersArray;
 	}
-	React.useEffect(
-		() => {
-			const fetchNextPage = fetchNextPageFactory(
-				client,
-				appName,
-				scaleReqModifiers,
-				deploymentReqModifiers,
-				pagesMap,
-				dispatch
-			);
-			dispatch({ type: ActionType.SET_FETCH_NEXT_PAGE, fetchNextPage });
-		},
-		[client, appName, scaleReqModifiers, deploymentReqModifiers, pagesMap, dispatch]
-	);
-	React.useEffect(
-		() => {
-			if (!scalesEnabled && !deploymentsEnabled) {
-				return;
-			}
+	React.useEffect(() => {
+		const fetchNextPage = fetchNextPageFactory(
+			client,
+			appName,
+			scaleReqModifiers,
+			deploymentReqModifiers,
+			pagesMap,
+			dispatch
+		);
+		dispatch({ type: ActionType.SET_FETCH_NEXT_PAGE, fetchNextPage });
+	}, [client, appName, scaleReqModifiers, deploymentReqModifiers, pagesMap, dispatch]);
+	React.useEffect(() => {
+		if (!scalesEnabled && !deploymentsEnabled) {
+			return;
+		}
 
-			const cancel = client.streamReleaseHistory(
-				(res: StreamReleaseHistoryResponse, error: Error | null) => {
-					if (error) {
-						dispatch([{ type: ActionType.SET_ERROR, error }, { type: ActionType.SET_LOADING, loading: false }]);
-						return;
-					}
-
-					// wait for both streams to have a response
-					if (!res.isComplete()) return;
-
+		const cancel = client.streamReleaseHistory(
+			(res: StreamReleaseHistoryResponse, error: Error | null) => {
+				if (error) {
 					dispatch([
-						{ type: ActionType.SET_ITEMS, items: res.getItemsList() },
-						{
-							type: ActionType.SET_NEXT_PAGE_TOKEN,
-							token: new NextPageTokens(res.getScaleRequestsNextPageToken(), res.getDeploymentsNextPageToken())
-						},
 						{ type: ActionType.SET_ERROR, error },
 						{ type: ActionType.SET_LOADING, loading: false }
 					]);
-				},
-				// scale request modifiers
-				[setNameFilters(appName), setPageSize(50), setStreamUpdates(), setStreamCreates(), ...scaleReqModifiers],
-				// deployment request modifiers
-				[setNameFilters(appName), setPageSize(50), setStreamUpdates(), setStreamCreates(), ...deploymentReqModifiers]
-			);
-			return cancel;
-		},
-		[client, appName, scaleReqModifiers, deploymentReqModifiers, scalesEnabled, deploymentsEnabled, dispatch]
-	);
+					return;
+				}
+
+				// wait for both streams to have a response
+				if (!res.isComplete()) return;
+
+				dispatch([
+					{ type: ActionType.SET_ITEMS, items: res.getItemsList() },
+					{
+						type: ActionType.SET_NEXT_PAGE_TOKEN,
+						token: new NextPageTokens(res.getScaleRequestsNextPageToken(), res.getDeploymentsNextPageToken())
+					},
+					{ type: ActionType.SET_ERROR, error },
+					{ type: ActionType.SET_LOADING, loading: false }
+				]);
+			},
+			// scale request modifiers
+			[setNameFilters(appName), setPageSize(50), setStreamUpdates(), setStreamCreates(), ...scaleReqModifiers],
+			// deployment request modifiers
+			[setNameFilters(appName), setPageSize(50), setStreamUpdates(), setStreamCreates(), ...deploymentReqModifiers]
+		);
+		return cancel;
+	}, [client, appName, scaleReqModifiers, deploymentReqModifiers, scalesEnabled, deploymentsEnabled, dispatch]);
 }

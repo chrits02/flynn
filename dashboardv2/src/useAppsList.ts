@@ -16,31 +16,28 @@ export default function useAppsList(reqModifiers: RequestModifier<StreamAppsRequ
 	if (reqModifiers.length === 0) {
 		reqModifiers = emptyReqModifiersArray;
 	}
-	React.useEffect(
-		() => {
-			setAppsLoading(true);
-			setApps([]);
-			const cancel = client.streamApps(
-				(res: StreamAppsResponse, error: Error | null) => {
-					if (error) {
-						setError(error);
-						setAppsLoading(false);
-						return;
-					}
-					setApps(res.getAppsList());
-					setNextPageToken(res.getNextPageToken());
-					setError(null);
+	React.useEffect(() => {
+		setAppsLoading(true);
+		setApps([]);
+		const cancel = client.streamApps(
+			(res: StreamAppsResponse, error: Error | null) => {
+				if (error) {
+					setError(error);
 					setAppsLoading(false);
-				},
-				setPageSize(50),
-				setStreamCreates(),
-				setStreamUpdates(),
-				...reqModifiers
-			);
-			return cancel;
-		},
-		[client, reqModifiers]
-	);
+					return;
+				}
+				setApps(res.getAppsList());
+				setNextPageToken(res.getNextPageToken());
+				setError(null);
+				setAppsLoading(false);
+			},
+			setPageSize(50),
+			setStreamCreates(),
+			setStreamUpdates(),
+			...reqModifiers
+		);
+		return cancel;
+	}, [client, reqModifiers]);
 
 	const fetchNextPage = React.useCallback(
 		(pageToken) => {
@@ -73,16 +70,13 @@ export default function useAppsList(reqModifiers: RequestModifier<StreamAppsRequ
 		[client, pageOrder, pagesMap, reqModifiers]
 	);
 
-	const allApps = React.useMemo(
-		() => {
-			return apps.concat(
-				pageOrder.reduce((m: App[], pts: string) => {
-					return m.concat(pagesMap.get(pts) || []);
-				}, [])
-			);
-		},
-		[apps, pageOrder, pagesMap]
-	);
+	const allApps = React.useMemo(() => {
+		return apps.concat(
+			pageOrder.reduce((m: App[], pts: string) => {
+				return m.concat(pagesMap.get(pts) || []);
+			}, [])
+		);
+	}, [apps, pageOrder, pagesMap]);
 
 	return {
 		loading: appsLoading,

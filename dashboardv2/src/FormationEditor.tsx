@@ -317,15 +317,12 @@ export default function FormationEditor(props: Props) {
 
 	const isLoading = scaleLoading || releaseLoading;
 
-	React.useEffect(
-		() => {
-			const error = scaleError || releaseError;
-			if (error) {
-				dispatch({ type: ActionType.SET_ERROR, error });
-			}
-		},
-		[scaleError, releaseError, dispatch]
-	);
+	React.useEffect(() => {
+		const error = scaleError || releaseError;
+		if (error) {
+			dispatch({ type: ActionType.SET_ERROR, error });
+		}
+	}, [scaleError, releaseError, dispatch]);
 
 	const [enableNavProtection, disableNavProtection] = useNavProtection();
 	React.useEffect(

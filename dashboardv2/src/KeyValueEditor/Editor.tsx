@@ -89,13 +89,10 @@ function Editor({
 	const [keyInputSuggestions, setKeyInputSuggestions] = React.useState<string[]>([]);
 	React.useEffect(
 		() => {
-			const nextKeyInputSuggestions = suggestions.reduce(
-				(m: string[], s: Suggestion) => {
-					if (hasDataKey(data, s.key)) return m;
-					return m.concat(s.key);
-				},
-				[] as string[]
-			);
+			const nextKeyInputSuggestions = suggestions.reduce((m: string[], s: Suggestion) => {
+				if (hasDataKey(data, s.key)) return m;
+				return m.concat(s.key);
+			}, [] as string[]);
 			if (
 				nextKeyInputSuggestions.find((s: string, index: number) => {
 					return keyInputSuggestions[index] !== s;

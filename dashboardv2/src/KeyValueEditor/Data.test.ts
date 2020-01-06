@@ -16,20 +16,32 @@ import {
 } from './Data';
 
 it('buildData sets correct length and hasChanges', () => {
-	const a = buildData([['first', 'first-val'], ['second', 'second-val'], ['third', 'third-val']]);
+	const a = buildData([
+		['first', 'first-val'],
+		['second', 'second-val'],
+		['third', 'third-val']
+	]);
 
 	expect(a.length).toEqual(3);
 	expect(a.hasChanges).toEqual(false);
 });
 
 it('mapEntries iterates over entries', () => {
-	const a = buildData([['first', 'first-val'], ['second', 'second-val'], ['third', 'third-val']]);
+	const a = buildData([
+		['first', 'first-val'],
+		['second', 'second-val'],
+		['third', 'third-val']
+	]);
 
 	expect(
 		mapEntries(a, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['second', 'second-val', 1], ['third', 'third-val', 2]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['second', 'second-val', 1],
+		['third', 'third-val', 2]
+	]);
 });
 
 it('mapEntries with APPEND_EMPTY_ENTRY iterates over entries with an extra empty one at end', () => {
@@ -43,24 +55,41 @@ it('mapEntries with APPEND_EMPTY_ENTRY iterates over entries with an extra empty
 			},
 			MapEntriesOption.APPEND_EMPTY_ENTRY
 		)
-	).toEqual([['first', 'first-val', 0], ['', '', 1]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['', '', 1]
+	]);
 });
 
 it('filterData returns Data with filter applied for mapEntires and getEntries', () => {
-	const a = buildData([['first', 'first-val'], ['second', 'second-val'], ['third', 'third-val']]);
+	const a = buildData([
+		['first', 'first-val'],
+		['second', 'second-val'],
+		['third', 'third-val']
+	]);
 	const filtered = filterData(a, 'ir');
 
 	expect(
 		mapEntries(filtered, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['third', 'third-val', 2]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['third', 'third-val', 2]
+	]);
 
-	expect(getEntries(filtered)).toEqual([['first', 'first-val'], ['third', 'third-val']]);
+	expect(getEntries(filtered)).toEqual([
+		['first', 'first-val'],
+		['third', 'third-val']
+	]);
 });
 
 it('setKeyAtIndex sets entry key at given index', () => {
-	const a = buildData([['first', 'first-val'], ['second', 'second-val'], ['third', 'third-val']]);
+	const a = buildData([
+		['first', 'first-val'],
+		['second', 'second-val'],
+		['third', 'third-val']
+	]);
 
 	const b = setKeyAtIndex(a, 'two', 1);
 	expect(b.length).toEqual(a.length);
@@ -70,11 +99,19 @@ it('setKeyAtIndex sets entry key at given index', () => {
 		mapEntries(b, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['two', 'second-val', 1], ['third', 'third-val', 2]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['two', 'second-val', 1],
+		['third', 'third-val', 2]
+	]);
 });
 
 it('setKeyAtIndex removes existing entry with given key', () => {
-	const a = buildData([['first', 'first-val'], ['second', 'second-val'], ['third', 'third-val']]);
+	const a = buildData([
+		['first', 'first-val'],
+		['second', 'second-val'],
+		['third', 'third-val']
+	]);
 
 	const b = setKeyAtIndex(a, 'first', 1);
 	expect(b.length).toEqual(a.length);
@@ -84,11 +121,17 @@ it('setKeyAtIndex removes existing entry with given key', () => {
 		mapEntries(b, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'second-val', 1], ['third', 'third-val', 2]]);
+	).toEqual([
+		['first', 'second-val', 1],
+		['third', 'third-val', 2]
+	]);
 });
 
 it('setKeyAtIndex correctly identifies key to remove', () => {
-	const a = buildData([['one.one', '1.1'], ['one.two', '1.2']]);
+	const a = buildData([
+		['one.one', '1.1'],
+		['one.two', '1.2']
+	]);
 
 	const b = appendKey(a, 'one.');
 	expect(b.length).toEqual(a.length + 1);
@@ -103,7 +146,12 @@ it('setKeyAtIndex correctly identifies key to remove', () => {
 		mapEntries(d, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['one.one', '1.1', 0], ['one.two', '1.2', 1], ['one.three', '', 2], ['one.', '', 3]]);
+	).toEqual([
+		['one.one', '1.1', 0],
+		['one.two', '1.2', 1],
+		['one.three', '', 2],
+		['one.', '', 3]
+	]);
 	expect(d.length).toEqual(c.length + 1);
 	expect(d.hasChanges).toEqual(true);
 });
@@ -119,25 +167,51 @@ it('setKeyAtIndex appends entry with given key if index is _entries.length', () 
 		mapEntries(b, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['two', '', 1]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['two', '', 1]
+	]);
 });
 
 it('setKeyAtIndex removes entry if given key is empty and value is also empty', () => {
-	const a = setKeyAtIndex(buildData([['first', 'first-val'], ['second', ''], ['third', 'third-val']]), '', 1);
+	const a = setKeyAtIndex(
+		buildData([
+			['first', 'first-val'],
+			['second', ''],
+			['third', 'third-val']
+		]),
+		'',
+		1
+	);
 	expect(
 		mapEntries(a, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['third', 'third-val', 2]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['third', 'third-val', 2]
+	]);
 	expect(a.length).toEqual(2);
 	expect(a.hasChanges).toEqual(true);
 
-	const b = setKeyAtIndex(buildData([['first', 'first-val'], ['second', 'second-val'], ['third', 'third-val']]), '', 1);
+	const b = setKeyAtIndex(
+		buildData([
+			['first', 'first-val'],
+			['second', 'second-val'],
+			['third', 'third-val']
+		]),
+		'',
+		1
+	);
 	expect(
 		mapEntries(b, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['', 'second-val', 1], ['third', 'third-val', 2]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['', 'second-val', 1],
+		['third', 'third-val', 2]
+	]);
 	expect(b.length).toEqual(3);
 	expect(b.hasChanges).toEqual(true);
 });
@@ -184,11 +258,18 @@ it('appendKey appends entry with given key', () => {
 		mapEntries(b, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['two', '', 1]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['two', '', 1]
+	]);
 });
 
 it('setValueAtIndex sets entry value at given index', () => {
-	const a = buildData([['first', 'first-val'], ['second', 'second-val'], ['third', 'third-val']]);
+	const a = buildData([
+		['first', 'first-val'],
+		['second', 'second-val'],
+		['third', 'third-val']
+	]);
 
 	const b = setValueAtIndex(a, '3', 2);
 	expect(b.length).toEqual(a.length);
@@ -198,21 +279,40 @@ it('setValueAtIndex sets entry value at given index', () => {
 		mapEntries(b, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['second', 'second-val', 1], ['third', '3', 2]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['second', 'second-val', 1],
+		['third', '3', 2]
+	]);
 });
 
 it('setValueAtIndex removes entry if key and given value are empty', () => {
-	const a = setValueAtIndex(buildData([['first', 'first-val'], ['', 'second-val'], ['third', 'third-val']]), '', 1);
+	const a = setValueAtIndex(
+		buildData([
+			['first', 'first-val'],
+			['', 'second-val'],
+			['third', 'third-val']
+		]),
+		'',
+		1
+	);
 	expect(
 		mapEntries(a, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['third', 'third-val', 2]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['third', 'third-val', 2]
+	]);
 	expect(a.length).toEqual(2);
 	expect(a.hasChanges).toEqual(true);
 
 	const b = setValueAtIndex(
-		buildData([['first', 'first-val'], ['second', 'second-val'], ['third', 'third-val']]),
+		buildData([
+			['first', 'first-val'],
+			['second', 'second-val'],
+			['third', 'third-val']
+		]),
 		'',
 		1
 	);
@@ -220,7 +320,11 @@ it('setValueAtIndex removes entry if key and given value are empty', () => {
 		mapEntries(b, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['second', '', 1], ['third', 'third-val', 2]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['second', '', 1],
+		['third', 'third-val', 2]
+	]);
 	expect(b.length).toEqual(3);
 	expect(b.hasChanges).toEqual(true);
 });
@@ -236,7 +340,10 @@ it('setValueAtIndex appends entry with given value if index is _entries.length',
 		mapEntries(b, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['', '2', 1]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['', '2', 1]
+	]);
 });
 
 it('setValueAtIndex changing value then changing back results in no changes', () => {
@@ -271,7 +378,10 @@ it('appendValue appends entry with given value', () => {
 		mapEntries(b, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['', '2', 1]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['', '2', 1]
+	]);
 });
 
 it('appendEntry appends entry with given key and value', () => {
@@ -285,11 +395,18 @@ it('appendEntry appends entry with given key and value', () => {
 		mapEntries(b, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['two', '2', 1]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['two', '2', 1]
+	]);
 });
 
 it('removeEntryAtIndex removes entry at given index', () => {
-	const a = buildData([['first', 'first-val'], ['second', 'second-val'], ['third', 'third-val']]);
+	const a = buildData([
+		['first', 'first-val'],
+		['second', 'second-val'],
+		['third', 'third-val']
+	]);
 
 	const b = removeEntryAtIndex(a, 1);
 	expect(b.length).toEqual(a.length - 1);
@@ -299,7 +416,10 @@ it('removeEntryAtIndex removes entry at given index', () => {
 		mapEntries(b, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['third', 'third-val', 2]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['third', 'third-val', 2]
+	]);
 });
 
 it('removeEntryAtIndex throws an error if index out of bounds', () => {
@@ -313,7 +433,11 @@ it('removeEntryAtIndex throws an error if index out of bounds', () => {
 });
 
 it('mapEntries with DELETED_ONLY iterates over deleted entries', () => {
-	let data = buildData([['first', 'first-val'], ['second', 'second-val'], ['third', 'third-val']]);
+	let data = buildData([
+		['first', 'first-val'],
+		['second', 'second-val'],
+		['third', 'third-val']
+	]);
 	data = removeEntryAtIndex(data, 1);
 	data = removeEntryAtIndex(data, 0);
 
@@ -325,7 +449,10 @@ it('mapEntries with DELETED_ONLY iterates over deleted entries', () => {
 			},
 			MapEntriesOption.DELETED_ONLY
 		)
-	).toEqual([['first', 'first-val', 0], ['second', 'second-val', 1]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['second', 'second-val', 1]
+	]);
 });
 
 it('mapEntries with DELETED_ONLY iterates over deleted entries but not replaced ones', () => {
@@ -354,7 +481,10 @@ it('mulitple edits work as expected', () => {
 		mapEntries(data, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['second', '', 1]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['second', '', 1]
+	]);
 	expect(data.hasChanges).toEqual(true);
 	expect(data.length).toEqual(2);
 
@@ -363,7 +493,11 @@ it('mulitple edits work as expected', () => {
 		mapEntries(data, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['second', '', 1], ['third', '', 2]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['second', '', 1],
+		['third', '', 2]
+	]);
 	expect(data.hasChanges).toEqual(true);
 	expect(data.length).toEqual(3);
 
@@ -372,7 +506,12 @@ it('mulitple edits work as expected', () => {
 		mapEntries(data, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['second', '', 1], ['third', '', 2], ['', '4', 3]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['second', '', 1],
+		['third', '', 2],
+		['', '4', 3]
+	]);
 	expect(data.hasChanges).toEqual(true);
 	expect(data.length).toEqual(4);
 
@@ -381,7 +520,11 @@ it('mulitple edits work as expected', () => {
 		mapEntries(data, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['third', '', 2], ['', '4', 3]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['third', '', 2],
+		['', '4', 3]
+	]);
 	expect(data.hasChanges).toEqual(true);
 	expect(data.length).toEqual(3);
 
@@ -390,7 +533,11 @@ it('mulitple edits work as expected', () => {
 		mapEntries(data, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['third', '3', 2], ['', '4', 3]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['third', '3', 2],
+		['', '4', 3]
+	]);
 	expect(data.hasChanges).toEqual(true);
 	expect(data.length).toEqual(3);
 
@@ -399,7 +546,11 @@ it('mulitple edits work as expected', () => {
 		mapEntries(data, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['third', '3', 2], ['fourth', '4', 3]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['third', '3', 2],
+		['fourth', '4', 3]
+	]);
 	expect(data.hasChanges).toEqual(true);
 	expect(data.length).toEqual(3);
 
@@ -408,7 +559,11 @@ it('mulitple edits work as expected', () => {
 		mapEntries(data, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['third', '3', 2], ['fourth', 'four', 3]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['third', '3', 2],
+		['fourth', 'four', 3]
+	]);
 	expect(data.hasChanges).toEqual(true);
 	expect(data.length).toEqual(3);
 
@@ -417,7 +572,11 @@ it('mulitple edits work as expected', () => {
 		mapEntries(data, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['third', '3', 2], ['fourth', '4', 4]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['third', '3', 2],
+		['fourth', '4', 4]
+	]);
 	expect(data.hasChanges).toEqual(true);
 	expect(data.length).toEqual(3);
 
@@ -426,7 +585,11 @@ it('mulitple edits work as expected', () => {
 		mapEntries(data, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['first', 'first-val', 0], ['third', '3', 2], ['fourth', '', 5]]);
+	).toEqual([
+		['first', 'first-val', 0],
+		['third', '3', 2],
+		['fourth', '', 5]
+	]);
 	expect(data.hasChanges).toEqual(true);
 	expect(data.length).toEqual(3);
 
@@ -558,10 +721,19 @@ it('entriesDiff returns a Diff indicating any and all changes made to given data
 });
 
 it('rebaseData attempts to apply changes to given base and produces a list of conflicts', () => {
-	let data = buildData([['first', 'first-val'], ['second', 'second-val'], ['third', 'third-val']]);
+	let data = buildData([
+		['first', 'first-val'],
+		['second', 'second-val'],
+		['third', 'third-val']
+	]);
 
 	const originalData = data;
-	let base = [['one', '1'], ['second', '2nd'], ['third', 'third-val'], ['four', '4']] as [string, string][];
+	let base = [
+		['one', '1'],
+		['second', '2nd'],
+		['third', 'third-val'],
+		['four', '4']
+	] as [string, string][];
 
 	// test with no changes
 	const data2 = rebaseData(data, base);
@@ -569,7 +741,12 @@ it('rebaseData attempts to apply changes to given base and produces a list of co
 		mapEntries(data2, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['second', '2nd', 1], ['third', 'third-val', 2], ['one', '1', 3], ['four', '4', 4]]);
+	).toEqual([
+		['second', '2nd', 1],
+		['third', 'third-val', 2],
+		['one', '1', 3],
+		['four', '4', 4]
+	]);
 	expect(data2.hasChanges).toEqual(false);
 	expect(data2.length).toEqual(base.length);
 	expect(data2.conflicts).toEqual([]);
@@ -581,7 +758,12 @@ it('rebaseData attempts to apply changes to given base and produces a list of co
 		mapEntries(data3, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['second', '2nd', 1], ['third', '3rd', 2], ['one', '1', 3], ['four', '4', 4]]);
+	).toEqual([
+		['second', '2nd', 1],
+		['third', '3rd', 2],
+		['one', '1', 3],
+		['four', '4', 4]
+	]);
 	expect(data3.hasChanges).toEqual(true);
 	expect(data3.length).toEqual(base.length);
 	expect(data3.conflicts).toEqual([]);
@@ -594,7 +776,12 @@ it('rebaseData attempts to apply changes to given base and produces a list of co
 		mapEntries(data4, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['second', '2nd', 1], ['three', '3', 2], ['one', '1', 3], ['four', '4', 4]]);
+	).toEqual([
+		['second', '2nd', 1],
+		['three', '3', 2],
+		['one', '1', 3],
+		['four', '4', 4]
+	]);
 	expect(data4.hasChanges).toEqual(true);
 	expect(data4.length).toEqual(base.length);
 	expect(data4.conflicts).toEqual([]);
@@ -607,7 +794,12 @@ it('rebaseData attempts to apply changes to given base and produces a list of co
 		mapEntries(data5, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['one', '1', 0], ['second', '2nd', 1], ['third', 'third-val', 2], ['four', '4', 3]]);
+	).toEqual([
+		['one', '1', 0],
+		['second', '2nd', 1],
+		['third', 'third-val', 2],
+		['four', '4', 3]
+	]);
 	expect(data5.hasChanges).toEqual(false);
 	expect(data5.length).toEqual(base.length);
 	expect(data5.conflicts).toEqual([]);
@@ -620,7 +812,12 @@ it('rebaseData attempts to apply changes to given base and produces a list of co
 		mapEntries(data6, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['second', '2nd', 1], ['third', 'third-val', 2], ['four', '4', 3], ['one', '1', 4]]);
+	).toEqual([
+		['second', '2nd', 1],
+		['third', 'third-val', 2],
+		['four', '4', 3],
+		['one', '1', 4]
+	]);
 	expect(data6.hasChanges).toEqual(false);
 	expect(data6.length).toEqual(base.length);
 	expect(data6.conflicts).toEqual([]);
@@ -633,7 +830,13 @@ it('rebaseData attempts to apply changes to given base and produces a list of co
 		mapEntries(data7, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['second', '2nd', 1], ['third', 'third-val', 2], ['five', '5', 3], ['one', '1', 4], ['four', '4', 5]]);
+	).toEqual([
+		['second', '2nd', 1],
+		['third', 'third-val', 2],
+		['five', '5', 3],
+		['one', '1', 4],
+		['four', '4', 5]
+	]);
 	expect(data7.hasChanges).toEqual(true);
 	expect(data7.length).toEqual(base.length + 1);
 	expect(data7.conflicts).toEqual([]);
@@ -655,7 +858,12 @@ it('rebaseData attempts to apply changes to given base and produces a list of co
 	]);
 	expect(data8.hasChanges).toEqual(true);
 	expect(data8.length).toEqual(base.length);
-	expect(data8.conflicts).toEqual([[{ op: 'add', next: ['four', '4'] }, { op: 'add', next: ['four', 'four'] }]]);
+	expect(data8.conflicts).toEqual([
+		[
+			{ op: 'add', next: ['four', '4'] },
+			{ op: 'add', next: ['four', 'four'] }
+		]
+	]);
 
 	// test resolving conflict
 	data = setValueAtIndex(data8, '4', 3);
@@ -699,11 +907,18 @@ it('rebaseData attempts to apply changes to given base and produces a list of co
 		mapEntries(data9, ([key, val, { rebaseConflict }]: Entry, index: number) => {
 			return [key, val, index, !!rebaseConflict];
 		})
-	).toEqual([['second', '2nd', 1, false], ['four', 'four', 2, true], ['one', '1', 3, false]]);
+	).toEqual([
+		['second', '2nd', 1, false],
+		['four', 'four', 2, true],
+		['one', '1', 3, false]
+	]);
 	expect(data9.hasChanges).toEqual(true);
 	expect(data9.length).toEqual(base.length - 1);
 	expect(data9.conflicts).toEqual([
-		[{ op: 'add', next: ['four', '4'] }, { op: 'replace', prev: ['third', 'third-val'], next: ['four', 'four'] }]
+		[
+			{ op: 'add', next: ['four', '4'] },
+			{ op: 'replace', prev: ['third', 'third-val'], next: ['four', 'four'] }
+		]
 	]);
 
 	// test resolving conflict
@@ -712,7 +927,11 @@ it('rebaseData attempts to apply changes to given base and produces a list of co
 		mapEntries(data, ([key, val, { rebaseConflict }]: Entry, index: number) => {
 			return [key, val, index, !!rebaseConflict];
 		})
-	).toEqual([['second', '2nd', 1, false], ['four', '4', 2, false], ['one', '1', 3, false]]);
+	).toEqual([
+		['second', '2nd', 1, false],
+		['four', '4', 2, false],
+		['one', '1', 3, false]
+	]);
 	expect(data.conflicts).toEqual([]);
 	expect(data.length).toEqual(base.length - 1);
 	expect(data.hasChanges).toEqual(false);
@@ -726,7 +945,11 @@ it('rebaseData attempts to apply changes to given base and produces a list of co
 		mapEntries(data10, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['second', '2nd', 1], ['four', '4', 2], ['one', '1', 3]]);
+	).toEqual([
+		['second', '2nd', 1],
+		['four', '4', 2],
+		['one', '1', 3]
+	]);
 	expect(data10.hasChanges).toEqual(true);
 	expect(data10.length).toEqual(base.length - 1);
 	expect(data10.conflicts).toEqual([]);
@@ -738,7 +961,11 @@ it('rebaseData attempts to apply changes to given base and produces a list of co
 		mapEntries(data11, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['second', '2nd', 1], ['one', '1', 3], ['four', '4', 4]]);
+	).toEqual([
+		['second', '2nd', 1],
+		['one', '1', 3],
+		['four', '4', 4]
+	]);
 	expect(data11.hasChanges).toEqual(true);
 	expect(data11.length).toEqual(base.length - 1);
 	expect(data11.conflicts).toEqual([]);
@@ -750,7 +977,11 @@ it('rebaseData attempts to apply changes to given base and produces a list of co
 		mapEntries(data12, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['third', 'third-val', 2], ['one', '1', 3], ['four', '4', 4]]);
+	).toEqual([
+		['third', 'third-val', 2],
+		['one', '1', 3],
+		['four', '4', 4]
+	]);
 	expect(data12.hasChanges).toEqual(true);
 	expect(data12.length).toEqual(base.length - 1);
 	expect(data12.conflicts).toEqual([
@@ -799,7 +1030,12 @@ it('rebaseData attempts to apply changes to given base and produces a list of co
 		mapEntries(data, ([key, val]: Entry, index: number) => {
 			return [key, val, index];
 		})
-	).toEqual([['third', 'third-val', 2], ['one', '1', 3], ['four', '4', 4], ['second', '2nd', 5]]);
+	).toEqual([
+		['third', 'third-val', 2],
+		['one', '1', 3],
+		['four', '4', 4],
+		['second', '2nd', 5]
+	]);
 	expect(data.conflicts).toEqual([]);
 	expect(data.length).toEqual(base.length);
 	expect(data.hasChanges).toEqual(false);

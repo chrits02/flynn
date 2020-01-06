@@ -197,58 +197,49 @@ export default function ProcessesDiff({
 	);
 	const dispatch = useMergeDispatch(localDispatch, callerDispatch, false);
 
-	React.useEffect(
-		() => {
-			dispatch({ type: ActionType.PROPS_UPDATED, props: { scale, nextScale, release, confirmScaleToZero } });
-		},
-		[scale, nextScale, release, confirmScaleToZero, dispatch]
-	);
+	React.useEffect(() => {
+		dispatch({ type: ActionType.PROPS_UPDATED, props: { scale, nextScale, release, confirmScaleToZero } });
+	}, [scale, nextScale, release, confirmScaleToZero, dispatch]);
 
-	React.useEffect(
-		() => {
-			if (isScaleToZeroConfirmed) {
-				dispatch({ type: ActionType.SCALE_TO_ZERO_CONFIRMED });
-			} else {
-				dispatch({ type: ActionType.SCALE_TO_ZERO_UNCONFIRMED });
-			}
-		},
-		[isScaleToZeroConfirmed, dispatch]
-	);
+	React.useEffect(() => {
+		if (isScaleToZeroConfirmed) {
+			dispatch({ type: ActionType.SCALE_TO_ZERO_CONFIRMED });
+		} else {
+			dispatch({ type: ActionType.SCALE_TO_ZERO_UNCONFIRMED });
+		}
+	}, [isScaleToZeroConfirmed, dispatch]);
 
 	const isPending = scale.getState() === ScaleRequestState.SCALE_PENDING;
 
 	return (
 		<Box direction="row" gap="small" {...boxProps}>
-			{processesFullDiff.reduce(
-				(m: React.ReactNodeArray, op: DiffOp<string, number>) => {
-					const key = op.key;
-					let startVal = scale.getNewProcessesMap().get(key) || 0;
-					let val = op.value || 0;
-					if (op.op === 'remove') {
-						val = 0;
-					}
-					if (op.op === 'keep') {
-						val = startVal;
-					}
-					m.push(
-						<Box align="center" key={key}>
-							<WrappedProcessScale
-								processesKey={key}
-								direction={direction}
-								confirmScaleToZero={confirmScaleToZero}
-								scaleToZeroConfirmed={scaleToZeroConfirmed.get(key)}
-								value={val}
-								originalValue={startVal}
-								showLabelDelta={!isPending}
-								label={key}
-								dispatch={dispatch}
-							/>
-						</Box>
-					);
-					return m;
-				},
-				[] as React.ReactNodeArray
-			)}
+			{processesFullDiff.reduce((m: React.ReactNodeArray, op: DiffOp<string, number>) => {
+				const key = op.key;
+				let startVal = scale.getNewProcessesMap().get(key) || 0;
+				let val = op.value || 0;
+				if (op.op === 'remove') {
+					val = 0;
+				}
+				if (op.op === 'keep') {
+					val = startVal;
+				}
+				m.push(
+					<Box align="center" key={key}>
+						<WrappedProcessScale
+							processesKey={key}
+							direction={direction}
+							confirmScaleToZero={confirmScaleToZero}
+							scaleToZeroConfirmed={scaleToZeroConfirmed.get(key)}
+							value={val}
+							originalValue={startVal}
+							showLabelDelta={!isPending}
+							label={key}
+							dispatch={dispatch}
+						/>
+					</Box>
+				);
+				return m;
+			}, [] as React.ReactNodeArray)}
 		</Box>
 	);
 }

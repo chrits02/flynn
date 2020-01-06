@@ -7,29 +7,20 @@ export default function useDebouncedInputOnChange(
 	timeout = 300
 ): [string, (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void, () => void] {
 	const [_value, setValue] = React.useState(value);
-	const _onChange = React.useMemo(
-		() => {
-			return debounce(onChange, timeout);
-		},
-		[onChange, timeout]
-	);
+	const _onChange = React.useMemo(() => {
+		return debounce(onChange, timeout);
+	}, [onChange, timeout]);
 
 	// handle new value being passed in
-	React.useEffect(
-		() => {
-			_onChange.cancel();
-			setValue(value);
-		},
-		[_onChange, value]
-	);
+	React.useEffect(() => {
+		_onChange.cancel();
+		setValue(value);
+	}, [_onChange, value]);
 
 	// make sure it doesn't fire after component unmounted
-	React.useEffect(
-		() => {
-			return _onChange.cancel();
-		},
-		[_onChange]
-	);
+	React.useEffect(() => {
+		return _onChange.cancel();
+	}, [_onChange]);
 
 	return [
 		_value,

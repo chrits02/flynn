@@ -37,14 +37,11 @@ export default function WindowedList({ state, thresholdTop, children }: Props) {
 	const scrollParentRef = React.useMemo<{ current: HTMLElement | Window | null }>(() => ({ current: null }), []);
 
 	const willUnmountFns = React.useMemo<Array<() => void>>(() => [], []);
-	React.useEffect(
-		() => {
-			return () => {
-				willUnmountFns.forEach((fn) => fn());
-			};
-		},
-		[willUnmountFns]
-	);
+	React.useEffect(() => {
+		return () => {
+			willUnmountFns.forEach((fn) => fn());
+		};
+	}, [willUnmountFns]);
 
 	const calcItemDimensions = React.useCallback((node: HTMLElement): ItemDimensions | null => {
 		const rect = node.getClientRects()[0];
@@ -56,29 +53,23 @@ export default function WindowedList({ state, thresholdTop, children }: Props) {
 		return dimensions;
 	}, []);
 
-	const getScrollTop = React.useCallback(
-		() => {
-			if (scrollParentRef.current === null) {
-				return 0;
-			}
-			let scrollTop = 0;
-			if (scrollParentRef.current === window) {
-				scrollTop = window.scrollY;
-			} else {
-				scrollTop = (scrollParentRef.current as HTMLElement).scrollTop;
-			}
-			return scrollTop;
-		},
-		[scrollParentRef]
-	);
+	const getScrollTop = React.useCallback(() => {
+		if (scrollParentRef.current === null) {
+			return 0;
+		}
+		let scrollTop = 0;
+		if (scrollParentRef.current === window) {
+			scrollTop = window.scrollY;
+		} else {
+			scrollTop = (scrollParentRef.current as HTMLElement).scrollTop;
+		}
+		return scrollTop;
+	}, [scrollParentRef]);
 
-	const handleScroll = React.useCallback(
-		() => {
-			const scrollTop = Math.max(0, getScrollTop() - thresholdTop);
-			state.updateScrollPosition(scrollTop);
-		},
-		[getScrollTop, state, thresholdTop]
-	);
+	const handleScroll = React.useCallback(() => {
+		const scrollTop = Math.max(0, getScrollTop() - thresholdTop);
+		state.updateScrollPosition(scrollTop);
+	}, [getScrollTop, state, thresholdTop]);
 
 	const onItemRender = React.useCallback(
 		(index: number, node: HTMLElement | null) => {
@@ -136,11 +127,8 @@ export interface ItemProps extends ChildrenProps {
 
 export const WindowedListItem = ({ children, index, onItemRender }: ItemProps) => {
 	const ref = React.useMemo<{ current: null | HTMLElement }>(() => ({ current: null }), []);
-	React.useLayoutEffect(
-		() => {
-			onItemRender(index, ref.current);
-		},
-		[index, onItemRender, ref]
-	);
+	React.useLayoutEffect(() => {
+		onItemRender(index, ref.current);
+	}, [index, onItemRender, ref]);
 	return <>{children(ref)}</>;
 };

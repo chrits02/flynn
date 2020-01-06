@@ -74,35 +74,35 @@ export function reducer(prevState: State, actions: Action | Action[]): State {
 
 export function useAppWithDispatch(appName: string, dispatch: Dispatcher) {
 	const client = useClient();
-	React.useEffect(
-		() => {
-			// no-op if called with empty appName
-			if (appName === '') return () => {};
+	React.useEffect(() => {
+		// no-op if called with empty appName
+		if (appName === '') return () => {};
 
-			const cancel = client.streamApps(
-				(res: StreamAppsResponse, error: Error | null) => {
-					if (error) {
-						dispatch([{ type: ActionType.SET_ERROR, error }, { type: ActionType.SET_LOADING, loading: false }]);
-						return;
-					}
-					const app = res.getAppsList()[0] || null;
-					if (!app) {
-						error = new Error('App not found');
-					}
+		const cancel = client.streamApps(
+			(res: StreamAppsResponse, error: Error | null) => {
+				if (error) {
 					dispatch([
-						{ type: ActionType.SET_APP, app },
 						{ type: ActionType.SET_ERROR, error },
 						{ type: ActionType.SET_LOADING, loading: false }
 					]);
-				},
-				setNameFilters(appName),
-				setPageSize(1),
-				setStreamUpdates()
-			);
-			return cancel;
-		},
-		[appName, client, dispatch]
-	);
+					return;
+				}
+				const app = res.getAppsList()[0] || null;
+				if (!app) {
+					error = new Error('App not found');
+				}
+				dispatch([
+					{ type: ActionType.SET_APP, app },
+					{ type: ActionType.SET_ERROR, error },
+					{ type: ActionType.SET_LOADING, loading: false }
+				]);
+			},
+			setNameFilters(appName),
+			setPageSize(1),
+			setStreamUpdates()
+		);
+		return cancel;
+	}, [appName, client, dispatch]);
 }
 
 export default function useApp(appName: string) {

@@ -3,8 +3,14 @@ import protoMapDiff, { Diff, applyProtoMapDiff, mergeProtoMapDiff, DiffOption } 
 import protoMapToObject from './protoMapToObject';
 
 it('generates diff', () => {
-	const a = new jspb.Map([['first', 'first-value'], ['third', 'third-value-1']]);
-	const b = new jspb.Map([['second', 'second-value'], ['third', 'third-value-2']]);
+	const a = new jspb.Map([
+		['first', 'first-value'],
+		['third', 'third-value-1']
+	]);
+	const b = new jspb.Map([
+		['second', 'second-value'],
+		['third', 'third-value-2']
+	]);
 	const diff = protoMapDiff(a, b);
 	expect(diff).toEqual([
 		{ op: 'remove', key: 'first' },
@@ -15,8 +21,16 @@ it('generates diff', () => {
 });
 
 it('generates diff including inchanged properties', () => {
-	const a = new jspb.Map([['first', 'first-value'], ['third', 'third-value-1'], ['fourth', 'fourth-value']]);
-	const b = new jspb.Map([['second', 'second-value'], ['third', 'third-value-2'], ['fourth', 'fourth-value']]);
+	const a = new jspb.Map([
+		['first', 'first-value'],
+		['third', 'third-value-1'],
+		['fourth', 'fourth-value']
+	]);
+	const b = new jspb.Map([
+		['second', 'second-value'],
+		['third', 'third-value-2'],
+		['fourth', 'fourth-value']
+	]);
 	const diff = protoMapDiff(a, b, DiffOption.INCLUDE_UNCHANGED);
 	expect(diff).toEqual([
 		{ op: 'remove', key: 'first' },
@@ -28,7 +42,11 @@ it('generates diff including inchanged properties', () => {
 });
 
 it('applies diff', () => {
-	const a = new jspb.Map([['first', 'first-value'], ['third', 'third-value-1'], ['fourth', 'fourth-value']]);
+	const a = new jspb.Map([
+		['first', 'first-value'],
+		['third', 'third-value-1'],
+		['fourth', 'fourth-value']
+	]);
 	const diff = [
 		{ op: 'add', key: 'second', value: 'second-value' },
 		{ op: 'remove', key: 'first' },
@@ -45,7 +63,11 @@ it('applies diff', () => {
 });
 
 it('applies diff via mutation', () => {
-	const a = new jspb.Map([['first', 'first-value'], ['third', 'third-value-1'], ['fourth', 'fourth-value']]);
+	const a = new jspb.Map([
+		['first', 'first-value'],
+		['third', 'third-value-1'],
+		['fourth', 'fourth-value']
+	]);
 	const diff = [
 		{ op: 'add', key: 'second', value: 'second-value' },
 		{ op: 'remove', key: 'first' },
@@ -87,7 +109,10 @@ it('merges diffs', () => {
 		{ op: 'add', key: 'third', value: 'third-value-2' }
 	]);
 	expect(conflicts).toEqual([
-		[{ op: 'add', key: 'second', value: 'second-value' }, { op: 'add', key: 'second', value: 'second-value-2' }]
+		[
+			{ op: 'add', key: 'second', value: 'second-value' },
+			{ op: 'add', key: 'second', value: 'second-value-2' }
+		]
 	]);
 	expect([...conflictKeys]).toEqual(['second']);
 });

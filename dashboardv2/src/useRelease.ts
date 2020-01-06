@@ -74,37 +74,37 @@ export function useReleaseWithDispatch(releaseName: string, callerDispatch: Disp
 	const client = useClient();
 	const [, localDispatch] = React.useReducer(reducer, initialState());
 	const dispatch = useMergeDispatch(localDispatch, callerDispatch, false);
-	React.useEffect(
-		() => {
-			// support being called with empty name
-			// (see <CreateDeployment />)
-			if (!releaseName) {
+	React.useEffect(() => {
+		// support being called with empty name
+		// (see <CreateDeployment />)
+		if (!releaseName) {
+			dispatch([
+				{ type: ActionType.SET_RELEASE, release: null },
+				{ type: ActionType.SET_ERROR, error: null },
+				{ type: ActionType.SET_LOADING, loading: false }
+			]);
+			return;
+		}
+		const cancel = client.streamReleases(
+			(res: StreamReleasesResponse, error: Error | null) => {
+				if (error) {
+					dispatch([
+						{ type: ActionType.SET_ERROR, error },
+						{ type: ActionType.SET_LOADING, loading: false }
+					]);
+					return;
+				}
 				dispatch([
-					{ type: ActionType.SET_RELEASE, release: null },
+					{ type: ActionType.SET_RELEASE, release: res.getReleasesList()[0] || null },
 					{ type: ActionType.SET_ERROR, error: null },
 					{ type: ActionType.SET_LOADING, loading: false }
 				]);
-				return;
-			}
-			const cancel = client.streamReleases(
-				(res: StreamReleasesResponse, error: Error | null) => {
-					if (error) {
-						dispatch([{ type: ActionType.SET_ERROR, error }, { type: ActionType.SET_LOADING, loading: false }]);
-						return;
-					}
-					dispatch([
-						{ type: ActionType.SET_RELEASE, release: res.getReleasesList()[0] || null },
-						{ type: ActionType.SET_ERROR, error: null },
-						{ type: ActionType.SET_LOADING, loading: false }
-					]);
-				},
-				setNameFilters(releaseName),
-				setPageSize(1)
-			);
-			return cancel;
-		},
-		[releaseName, client, dispatch]
-	);
+			},
+			setNameFilters(releaseName),
+			setPageSize(1)
+		);
+		return cancel;
+	}, [releaseName, client, dispatch]);
 }
 
 export default function useRelease(releaseName: string) {

@@ -101,44 +101,47 @@ export function useAppScaleWithDispatch(appName: string, callerDispatch: Dispatc
 	const [{ releaseName }, localDispatch] = React.useReducer(reducer, initialState());
 	const dispatch = useMergeDispatch(localDispatch, callerDispatch, false);
 	useAppWithDispatch(appName, dispatch);
-	React.useEffect(
-		() => {
-			if (!releaseName) {
-				const scale = new ScaleRequest();
-				scale.setState(ScaleRequestState.SCALE_COMPLETE);
-				dispatch([{ type: ActionType.SET_SCALE, scale }, { type: ActionType.SET_LOADING, loading: false }]);
-				return;
-			}
-			const cancel = client.streamScales(
-				(res: StreamScalesResponse, error: Error | null) => {
-					if (error) {
-						dispatch([{ type: ActionType.SET_ERROR, error }, { type: ActionType.SET_LOADING, loading: false }]);
-						return;
-					}
-					const scales = res.getScaleRequestsList();
-					let scale;
-					if (scales.length === 0) {
-						scale = new ScaleRequest();
-						scale.setState(ScaleRequestState.SCALE_COMPLETE);
-					} else {
-						scale = scales[0];
-					}
+	React.useEffect(() => {
+		if (!releaseName) {
+			const scale = new ScaleRequest();
+			scale.setState(ScaleRequestState.SCALE_COMPLETE);
+			dispatch([
+				{ type: ActionType.SET_SCALE, scale },
+				{ type: ActionType.SET_LOADING, loading: false }
+			]);
+			return;
+		}
+		const cancel = client.streamScales(
+			(res: StreamScalesResponse, error: Error | null) => {
+				if (error) {
 					dispatch([
-						{ type: ActionType.SET_SCALE, scale },
-						{ type: ActionType.SET_ERROR, error: null },
+						{ type: ActionType.SET_ERROR, error },
 						{ type: ActionType.SET_LOADING, loading: false }
 					]);
-				},
-				setNameFilters(releaseName),
-				filterScalesByState(ScaleRequestState.SCALE_COMPLETE),
-				setPageSize(1),
-				setStreamCreates(),
-				setStreamUpdates()
-			);
-			return cancel;
-		},
-		[releaseName, client, dispatch]
-	);
+					return;
+				}
+				const scales = res.getScaleRequestsList();
+				let scale;
+				if (scales.length === 0) {
+					scale = new ScaleRequest();
+					scale.setState(ScaleRequestState.SCALE_COMPLETE);
+				} else {
+					scale = scales[0];
+				}
+				dispatch([
+					{ type: ActionType.SET_SCALE, scale },
+					{ type: ActionType.SET_ERROR, error: null },
+					{ type: ActionType.SET_LOADING, loading: false }
+				]);
+			},
+			setNameFilters(releaseName),
+			filterScalesByState(ScaleRequestState.SCALE_COMPLETE),
+			setPageSize(1),
+			setStreamCreates(),
+			setStreamUpdates()
+		);
+		return cancel;
+	}, [releaseName, client, dispatch]);
 }
 
 export default function useAppScale(appName: string) {

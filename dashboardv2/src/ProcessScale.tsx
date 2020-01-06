@@ -181,35 +181,26 @@ const ProcessScale = React.memo(function ProcessScale({
 	const dispatch = useMergeDispatch(localDispatch, callerDispatch, false);
 
 	const delta = React.useMemo(() => value - originalValue, [originalValue, value]);
-	const deltaText = React.useMemo(
-		() => {
-			let sign = '+';
-			if (delta < 0) {
-				sign = '-';
-			}
-			return ` (${sign}${Math.abs(delta)})`;
-		},
-		[delta]
-	);
+	const deltaText = React.useMemo(() => {
+		let sign = '+';
+		if (delta < 0) {
+			sign = '-';
+		}
+		return ` (${sign}${Math.abs(delta)})`;
+	}, [delta]);
 
 	// Handle incoming changes to props.value
-	React.useEffect(
-		() => {
-			dispatch({ type: ActionType.SET_VALUE, value: initialValue });
-		},
-		[initialValue, dispatch]
-	);
+	React.useEffect(() => {
+		dispatch({ type: ActionType.SET_VALUE, value: initialValue });
+	}, [initialValue, dispatch]);
 
 	// Focus input when valueEditable enabled
 	const valueInput = React.useRef(null) as React.RefObject<HTMLInputElement>;
-	React.useLayoutEffect(
-		() => {
-			if (valueEditable && valueInput.current) {
-				valueInput.current.focus();
-			}
-		},
-		[valueEditable, valueInput]
-	);
+	React.useLayoutEffect(() => {
+		if (valueEditable && valueInput.current) {
+			valueInput.current.focus();
+		}
+	}, [valueEditable, valueInput]);
 
 	const handleIncrement = React.useCallback(
 		(e: React.SyntheticEvent) => {
@@ -245,20 +236,14 @@ const ProcessScale = React.memo(function ProcessScale({
 		[dispatch]
 	);
 
-	const handleValueTextClick = React.useCallback(
-		() => {
-			if (!mutable) return;
-			dispatch({ type: ActionType.SET_VALUE_EDITABLE, editable: true });
-		},
-		[mutable, dispatch]
-	);
+	const handleValueTextClick = React.useCallback(() => {
+		if (!mutable) return;
+		dispatch({ type: ActionType.SET_VALUE_EDITABLE, editable: true });
+	}, [mutable, dispatch]);
 
-	const handleValueInputBlur = React.useCallback(
-		() => {
-			dispatch({ type: ActionType.SET_VALUE_EDITABLE, editable: false });
-		},
-		[dispatch]
-	);
+	const handleValueInputBlur = React.useCallback(() => {
+		dispatch({ type: ActionType.SET_VALUE_EDITABLE, editable: false });
+	}, [dispatch]);
 
 	return (
 		<Box

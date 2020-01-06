@@ -58,38 +58,29 @@ let debugIndex = 0;
 export default function useNavProtection(): [() => void, () => void] {
 	const navProtectionContext = React.useContext(NavProtectionContext);
 	const [navProtectionKey] = React.useState(() => Symbol(`useNavProtection key(${debugIndex++})`));
-	const enableNavProtection = React.useCallback(
-		() => {
-			const prevEnabled = navProtectionEnabled();
-			navProtectionState.enabledKeys.add(navProtectionKey);
-			if (navProtectionContext) {
-				navProtectionState.enabledContexts.add(navProtectionContext);
-			}
-			if (!prevEnabled) {
-				handleNavProtectionEnabled();
-			}
-		},
-		[navProtectionContext, navProtectionKey]
-	);
-	const disableNavProtection = React.useCallback(
-		() => {
-			const prevEnabled = navProtectionEnabled();
-			navProtectionState.enabledKeys.delete(navProtectionKey);
-			if (navProtectionContext) {
-				navProtectionState.enabledContexts.delete(navProtectionContext);
-			}
-			if (prevEnabled && !navProtectionEnabled()) {
-				handleNavProtectionDisabled();
-			}
-		},
-		[navProtectionContext, navProtectionKey]
-	);
-	React.useEffect(
-		() => {
-			// call disableNavProtection when component unmounted
-			return disableNavProtection;
-		},
-		[disableNavProtection]
-	);
+	const enableNavProtection = React.useCallback(() => {
+		const prevEnabled = navProtectionEnabled();
+		navProtectionState.enabledKeys.add(navProtectionKey);
+		if (navProtectionContext) {
+			navProtectionState.enabledContexts.add(navProtectionContext);
+		}
+		if (!prevEnabled) {
+			handleNavProtectionEnabled();
+		}
+	}, [navProtectionContext, navProtectionKey]);
+	const disableNavProtection = React.useCallback(() => {
+		const prevEnabled = navProtectionEnabled();
+		navProtectionState.enabledKeys.delete(navProtectionKey);
+		if (navProtectionContext) {
+			navProtectionState.enabledContexts.delete(navProtectionContext);
+		}
+		if (prevEnabled && !navProtectionEnabled()) {
+			handleNavProtectionDisabled();
+		}
+	}, [navProtectionContext, navProtectionKey]);
+	React.useEffect(() => {
+		// call disableNavProtection when component unmounted
+		return disableNavProtection;
+	}, [disableNavProtection]);
 	return [enableNavProtection, disableNavProtection];
 }

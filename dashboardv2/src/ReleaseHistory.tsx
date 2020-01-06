@@ -541,33 +541,30 @@ const ReleaseHistoryScale = React.memo(
 						</div>
 						<Box wrap direction="row">
 							{diff.length === 0 ? <Text color="dark-2">&lt;No processes&gt;</Text> : null}
-							{diff.reduce(
-								(m: React.ReactNodeArray, op: DiffOp<string, number>) => {
-									if (op.op === 'remove') {
-										return m;
-									}
-									let val = op.value;
-									let prevVal = s.getOldProcessesMap().get(op.key);
-									if (op.op === 'keep') {
-										val = prevVal;
-									}
-									m.push(
-										<ProcessScale
-											key={op.key}
-											direction="row"
-											margin="xsmall"
-											size="xsmall"
-											value={val as number}
-											originalValue={prevVal}
-											showDelta
-											label={op.key}
-											dispatch={dispatch}
-										/>
-									);
+							{diff.reduce((m: React.ReactNodeArray, op: DiffOp<string, number>) => {
+								if (op.op === 'remove') {
 									return m;
-								},
-								[] as React.ReactNodeArray
-							)}
+								}
+								let val = op.value;
+								let prevVal = s.getOldProcessesMap().get(op.key);
+								if (op.op === 'keep') {
+									val = prevVal;
+								}
+								m.push(
+									<ProcessScale
+										key={op.key}
+										direction="row"
+										margin="xsmall"
+										size="xsmall"
+										value={val as number}
+										originalValue={prevVal}
+										showDelta
+										label={op.key}
+										dispatch={dispatch}
+									/>
+								);
+								return m;
+							}, [] as React.ReactNodeArray)}
 						</Box>
 					</div>
 				</label>
@@ -626,15 +623,12 @@ function ReleaseHistory({ appName }: Props) {
 	] = React.useReducer<Reducer>(reducer, initialState());
 
 	const handleError = useErrorHandler();
-	React.useEffect(
-		() => {
-			const error = appError || currentScaleError || releaseHistoryError || createDeploymentError;
-			if (error) {
-				handleError(error);
-			}
-		},
-		[appError, currentScaleError, releaseHistoryError, createDeploymentError, handleError]
-	);
+	React.useEffect(() => {
+		const error = appError || currentScaleError || releaseHistoryError || createDeploymentError;
+		if (error) {
+			handleError(error);
+		}
+	}, [appError, currentScaleError, releaseHistoryError, createDeploymentError, handleError]);
 
 	useAppWithDispatch(appName, dispatch);
 
@@ -643,52 +637,37 @@ function ReleaseHistory({ appName }: Props) {
 
 	const currentReleaseName = app ? app.getRelease() : '';
 
-	React.useEffect(
-		() => {
-			if (!currentReleaseName) return;
-			dispatch({ type: ActionType.SET_SELECTED_ITEM, name: currentReleaseName });
-		},
-		[currentReleaseName]
-	);
+	React.useEffect(() => {
+		if (!currentReleaseName) return;
+		dispatch({ type: ActionType.SET_SELECTED_ITEM, name: currentReleaseName });
+	}, [currentReleaseName]);
 
 	const { urlParams } = useRouter();
 	const releasesListFilters = [urlParams.getAll('rhf'), ['code', 'env', 'scale']].find((i) => i.length > 0) as string[];
 
 	const rhf = releasesListFilters;
-	const isCodeReleaseEnabled = React.useMemo(
-		() => {
-			return rhf.length === 0 || rhf.indexOf('code') !== -1;
-		},
-		[rhf]
-	);
-	const isConfigReleaseEnabled = React.useMemo(
-		() => {
-			return rhf.indexOf('env') !== -1;
-		},
-		[rhf]
-	);
-	const scalesEnabled = React.useMemo(
-		() => {
-			return rhf.indexOf('scale') !== -1;
-		},
-		[rhf]
-	);
+	const isCodeReleaseEnabled = React.useMemo(() => {
+		return rhf.length === 0 || rhf.indexOf('code') !== -1;
+	}, [rhf]);
+	const isConfigReleaseEnabled = React.useMemo(() => {
+		return rhf.indexOf('env') !== -1;
+	}, [rhf]);
+	const scalesEnabled = React.useMemo(() => {
+		return rhf.indexOf('scale') !== -1;
+	}, [rhf]);
 
 	// Stream release history (scales and deployments coalesced together)
 	const deploymentsEnabled = isCodeReleaseEnabled || isConfigReleaseEnabled;
-	const deploymentReqModifiers = React.useMemo(
-		() => {
-			let filterType = ReleaseType.ANY as ReleaseTypeMap[keyof ReleaseTypeMap];
-			if (isCodeReleaseEnabled && !isConfigReleaseEnabled) {
-				filterType = ReleaseType.CODE;
-			} else if (isConfigReleaseEnabled && !isCodeReleaseEnabled) {
-				filterType = ReleaseType.CONFIG;
-			}
+	const deploymentReqModifiers = React.useMemo(() => {
+		let filterType = ReleaseType.ANY as ReleaseTypeMap[keyof ReleaseTypeMap];
+		if (isCodeReleaseEnabled && !isConfigReleaseEnabled) {
+			filterType = ReleaseType.CODE;
+		} else if (isConfigReleaseEnabled && !isCodeReleaseEnabled) {
+			filterType = ReleaseType.CONFIG;
+		}
 
-			return [listDeploymentsRequestFilterType(filterType)];
-		},
-		[isCodeReleaseEnabled, isConfigReleaseEnabled]
-	);
+		return [listDeploymentsRequestFilterType(filterType)];
+	}, [isCodeReleaseEnabled, isConfigReleaseEnabled]);
 	const scaleReqModifiers = React.useMemo(() => [], []);
 	useReleaseHistoryWithDispatch(
 		appName,
@@ -748,35 +727,29 @@ function ReleaseHistory({ appName }: Props) {
 	const paddingBottomRef = React.useRef<HTMLElement>();
 
 	const windowedListState = React.useMemo(() => new WindowedListState(), []);
-	React.useEffect(
-		() => {
-			return windowedListState.onChange((state: WindowedListState) => {
-				const paddingTopNode = paddingTopRef.current;
-				if (paddingTopNode) {
-					paddingTopNode.style.height = state.paddingTop + 'px';
-				}
-				const paddingBottomNode = paddingBottomRef.current;
-				if (paddingBottomNode) {
-					paddingBottomNode.style.height = state.paddingBottom + 'px';
-				}
+	React.useEffect(() => {
+		return windowedListState.onChange((state: WindowedListState) => {
+			const paddingTopNode = paddingTopRef.current;
+			if (paddingTopNode) {
+				paddingTopNode.style.height = state.paddingTop + 'px';
+			}
+			const paddingBottomNode = paddingBottomRef.current;
+			if (paddingBottomNode) {
+				paddingBottomNode.style.height = state.paddingBottom + 'px';
+			}
 
-				dispatch({ type: ActionType.SET_WINDOW, startIndex: state.visibleIndexTop, length: state.visibleLength });
-			});
-		},
-		[windowedListState]
-	);
+			dispatch({ type: ActionType.SET_WINDOW, startIndex: state.visibleIndexTop, length: state.visibleLength });
+		});
+	}, [windowedListState]);
 
 	// pagination
 	const withCancel = useWithCancel();
-	React.useEffect(
-		() => {
-			if (nextPageToken && startIndex + length >= items.length - 10) {
-				withCancel.set(nextPageToken.toString(), fetchNextPage(nextPageToken));
-			}
-			return () => {};
-		},
-		[fetchNextPage, items.length, length, nextPageToken, withCancel, startIndex]
-	);
+	React.useEffect(() => {
+		if (nextPageToken && startIndex + length >= items.length - 10) {
+			withCancel.set(nextPageToken.toString(), fetchNextPage(nextPageToken));
+		}
+		return () => {};
+	}, [fetchNextPage, items.length, length, nextPageToken, withCancel, startIndex]);
 
 	const releaseHistoryScrollContainerRef = React.useRef<HTMLElement>();
 	const [releaseHistoryScrollContainerNode, setReleaseHistoryScrollContainerNode] = React.useState<HTMLElement | null>(
@@ -791,26 +764,23 @@ function ReleaseHistory({ appName }: Props) {
 	const minPaneHeight = 400;
 	const windowingThresholdTop = 600;
 	const windowingThresholdBottom = 600;
-	React.useEffect(
-		() => {
-			if (releaseHistoryScrollContainerNode) {
-				const rect = releaseHistoryScrollContainerNode.getBoundingClientRect();
-				windowedListState.viewportHeight = rect.height + windowingThresholdTop + windowingThresholdBottom;
+	React.useEffect(() => {
+		if (releaseHistoryScrollContainerNode) {
+			const rect = releaseHistoryScrollContainerNode.getBoundingClientRect();
+			windowedListState.viewportHeight = rect.height + windowingThresholdTop + windowingThresholdBottom;
 
-				// adjust Release History pane height to fill available space
-				// NOTE: 42 is the height of the pane header
-				// TODO(jvatic): respond to window resizing
-				const adjustedHeight = Math.max(minPaneHeight, document.documentElement.clientHeight - 142);
-				if (paneHeight !== adjustedHeight) {
-					dispatch({ type: ActionType.SET_PANE_HEIGHT, height: adjustedHeight });
-				}
+			// adjust Release History pane height to fill available space
+			// NOTE: 42 is the height of the pane header
+			// TODO(jvatic): respond to window resizing
+			const adjustedHeight = Math.max(minPaneHeight, document.documentElement.clientHeight - 142);
+			if (paneHeight !== adjustedHeight) {
+				dispatch({ type: ActionType.SET_PANE_HEIGHT, height: adjustedHeight });
 			}
-			windowedListState.length = items.length;
-			windowedListState.defaultHeight = 150;
-			windowedListState.calculateVisibleIndices();
-		},
-		[items.length, paneHeight, releaseHistoryScrollContainerNode, windowedListState]
-	);
+		}
+		windowedListState.length = items.length;
+		windowedListState.defaultHeight = 150;
+		windowedListState.calculateVisibleIndices();
+	}, [items.length, paneHeight, releaseHistoryScrollContainerNode, windowedListState]);
 
 	if (releaseHistoryLoading || currentScaleLoading || appLoading) {
 		return <Loading />;

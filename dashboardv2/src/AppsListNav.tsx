@@ -27,14 +27,11 @@ export default function AppsListNav({ onNav }: Props) {
 		showSystemApps
 	]);
 	const { apps, nextPageToken, fetchNextPage, loading: isLoading, error: appsError } = useAppsList(appsListFilters);
-	React.useEffect(
-		() => {
-			if (appsError) {
-				handleError(appsError);
-			}
-		},
-		[appsError, handleError]
-	);
+	React.useEffect(() => {
+		if (appsError) {
+			handleError(appsError);
+		}
+	}, [appsError, handleError]);
 
 	// some query params are persistent, make sure they're passed along if present
 	const persistedUrlParams = new URLSearchParams();
@@ -53,50 +50,41 @@ export default function AppsListNav({ onNav }: Props) {
 	const windowedListState = React.useMemo(() => new WindowedListState(), []);
 	const windowingThresholdTop = 600;
 	const windowingThresholdBottom = 600;
-	React.useEffect(
-		() => {
-			return windowedListState.onChange((state: WindowedListState) => {
-				const paddingTopNode = paddingTopRef.current;
-				if (paddingTopNode) {
-					paddingTopNode.style.height = state.paddingTop + 'px';
-				}
-				const paddingBottomNode = paddingBottomRef.current;
-				if (paddingBottomNode) {
-					paddingBottomNode.style.height = state.paddingBottom + 'px';
-				}
+	React.useEffect(() => {
+		return windowedListState.onChange((state: WindowedListState) => {
+			const paddingTopNode = paddingTopRef.current;
+			if (paddingTopNode) {
+				paddingTopNode.style.height = state.paddingTop + 'px';
+			}
+			const paddingBottomNode = paddingBottomRef.current;
+			if (paddingBottomNode) {
+				paddingBottomNode.style.height = state.paddingBottom + 'px';
+			}
 
-				setStartIndex(state.visibleIndexTop);
-				setLength(state.visibleLength);
-			});
-		},
-		[windowedListState]
-	);
+			setStartIndex(state.visibleIndexTop);
+			setLength(state.visibleLength);
+		});
+	}, [windowedListState]);
 
 	// initialize WindowedListState
-	React.useLayoutEffect(
-		() => {
-			const scrollContainerNode = scrollContainerRef.current;
-			if (scrollContainerNode) {
-				const rect = scrollContainerNode.getBoundingClientRect();
-				windowedListState.viewportHeight = rect.height + windowingThresholdTop + windowingThresholdBottom;
-			}
-			windowedListState.length = apps.length;
-			windowedListState.defaultHeight = 50;
-			windowedListState.calculateVisibleIndices();
-		},
-		[apps.length, windowedListState]
-	);
+	React.useLayoutEffect(() => {
+		const scrollContainerNode = scrollContainerRef.current;
+		if (scrollContainerNode) {
+			const rect = scrollContainerNode.getBoundingClientRect();
+			windowedListState.viewportHeight = rect.height + windowingThresholdTop + windowingThresholdBottom;
+		}
+		windowedListState.length = apps.length;
+		windowedListState.defaultHeight = 50;
+		windowedListState.calculateVisibleIndices();
+	}, [apps.length, windowedListState]);
 
 	// pagination
-	React.useEffect(
-		() => {
-			if (nextPageToken && startIndex + length >= apps.length) {
-				return fetchNextPage(nextPageToken);
-			}
-			return () => {};
-		},
-		[fetchNextPage, apps.length, length, nextPageToken, startIndex]
-	);
+	React.useEffect(() => {
+		if (nextPageToken && startIndex + length >= apps.length) {
+			return fetchNextPage(nextPageToken);
+		}
+		return () => {};
+	}, [fetchNextPage, apps.length, length, nextPageToken, startIndex]);
 
 	const appRoute = React.useCallback(
 		(app: App) => {

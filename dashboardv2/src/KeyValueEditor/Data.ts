@@ -380,90 +380,82 @@ export function mapEntries<T>(data: Data, fn: (entry: Entry, index: number) => T
 	const deletedOnly = _opts.has(MapEntriesOption.DELETED_ONLY);
 	const filterPattern = data._filterPattern;
 	return data._entries
-		.reduce(
-			(m: T[], entry: Entry | undefined, index: number) => {
-				if (entry === undefined) return m;
-				const [key, value, state] = entry;
-				if ((deletedOnly && !state.deleted) || (!deletedOnly && state.deleted)) return m;
-				if (filterPattern && !fz(key, filterPattern)) return m;
-				m.push(fn([key, value, state], index));
-				return m;
-			},
-			[] as T[]
-		)
+		.reduce((m: T[], entry: Entry | undefined, index: number) => {
+			if (entry === undefined) return m;
+			const [key, value, state] = entry;
+			if ((deletedOnly && !state.deleted) || (!deletedOnly && state.deleted)) return m;
+			if (filterPattern && !fz(key, filterPattern)) return m;
+			m.push(fn([key, value, state], index));
+			return m;
+		}, [] as T[])
 		.concat(_opts.has(MapEntriesOption.APPEND_EMPTY_ENTRY) ? [fn(['', '', {}], data._entries.length)] : []);
 }
 
 export function entriesDiff(data: Data): Diff {
 	const diffMap = new Map<string, number>();
-	return data._entries.reduce(
-		(m: Diff, entry: Entry | undefined, index: number) => {
-			if (entry === undefined) return m;
-			const [key, value, state] = entry;
-			const hasChanges = !(key === state.originalKey && value === state.originalValue);
-			if (state.deleted && state.originalKey !== undefined && state.originalValue !== undefined) {
-				// check if it's already in the diff
-				const ode = diffMap.has(state.originalKey || '')
-					? m[diffMap.get(state.originalKey || '') as number]
-					: undefined;
-				if (ode && ode.op === 'remove' && ode.prev[0] === state.originalKey && ode.prev[1] === state.originalValue) {
-					return m;
-				}
-
-				// append remove op to diff for entry
-				const de = { op: 'remove', prev: [state.originalKey, state.originalValue] } as DiffEntry;
-				diffMap.set(state.originalKey, m.length);
-				return m.concat(de);
-			} else if (state.deleted) {
-				// deleted entries with no original key/val don't go in the diff
-				return m;
-			}
-
-			if (hasChanges && state.originalKey === undefined && state.originalValue === undefined) {
-				// check to see if a remove operation for this entry is already in the diff
-				const ode = diffMap.has(key) ? m[diffMap.get(key) as number] : undefined;
-				if (ode && ode.op === 'remove' && ode.prev[0] === key && ode.prev[1] === value) {
-					ode.op = 'keep';
-					return m;
-				}
-
-				// append add op to diff for entry
-				const de = { op: 'add', next: [key, value] } as DiffEntry;
-				diffMap.set(key, m.length);
-				return m.concat(de);
-			} else if (!hasChanges) {
-				// check to see if a remove operation for this entry is already in the diff
-				const ode = diffMap.has(key) ? m[diffMap.get(key) as number] : undefined;
-				if (ode && ode.op === 'remove' && ode.prev[0] === key && ode.prev[1] === value) {
-					ode.op = 'keep';
-					return m;
-				}
-
-				// append keep op to diff for entry
-				const de = { op: 'keep', prev: [key, value] } as DiffEntry;
-				diffMap.set(key, m.length);
-				return m.concat(de);
-			}
-
-			// check to see if a remove operation for this entry is already in the diff
+	return data._entries.reduce((m: Diff, entry: Entry | undefined, index: number) => {
+		if (entry === undefined) return m;
+		const [key, value, state] = entry;
+		const hasChanges = !(key === state.originalKey && value === state.originalValue);
+		if (state.deleted && state.originalKey !== undefined && state.originalValue !== undefined) {
+			// check if it's already in the diff
 			const ode = diffMap.has(state.originalKey || '') ? m[diffMap.get(state.originalKey || '') as number] : undefined;
 			if (ode && ode.op === 'remove' && ode.prev[0] === state.originalKey && ode.prev[1] === state.originalValue) {
-				ode.op = 'replace';
-				ode.next = [key, value];
 				return m;
 			}
 
-			// append replace op to diff for entry
-			const de = {
-				op: 'replace',
-				prev: [state.originalKey, state.originalValue],
-				next: [key, value]
-			} as DiffEntry;
-			diffMap.set(state.originalKey as string, m.length);
+			// append remove op to diff for entry
+			const de = { op: 'remove', prev: [state.originalKey, state.originalValue] } as DiffEntry;
+			diffMap.set(state.originalKey, m.length);
 			return m.concat(de);
-		},
-		[] as Diff
-	);
+		} else if (state.deleted) {
+			// deleted entries with no original key/val don't go in the diff
+			return m;
+		}
+
+		if (hasChanges && state.originalKey === undefined && state.originalValue === undefined) {
+			// check to see if a remove operation for this entry is already in the diff
+			const ode = diffMap.has(key) ? m[diffMap.get(key) as number] : undefined;
+			if (ode && ode.op === 'remove' && ode.prev[0] === key && ode.prev[1] === value) {
+				ode.op = 'keep';
+				return m;
+			}
+
+			// append add op to diff for entry
+			const de = { op: 'add', next: [key, value] } as DiffEntry;
+			diffMap.set(key, m.length);
+			return m.concat(de);
+		} else if (!hasChanges) {
+			// check to see if a remove operation for this entry is already in the diff
+			const ode = diffMap.has(key) ? m[diffMap.get(key) as number] : undefined;
+			if (ode && ode.op === 'remove' && ode.prev[0] === key && ode.prev[1] === value) {
+				ode.op = 'keep';
+				return m;
+			}
+
+			// append keep op to diff for entry
+			const de = { op: 'keep', prev: [key, value] } as DiffEntry;
+			diffMap.set(key, m.length);
+			return m.concat(de);
+		}
+
+		// check to see if a remove operation for this entry is already in the diff
+		const ode = diffMap.has(state.originalKey || '') ? m[diffMap.get(state.originalKey || '') as number] : undefined;
+		if (ode && ode.op === 'remove' && ode.prev[0] === state.originalKey && ode.prev[1] === state.originalValue) {
+			ode.op = 'replace';
+			ode.next = [key, value];
+			return m;
+		}
+
+		// append replace op to diff for entry
+		const de = {
+			op: 'replace',
+			prev: [state.originalKey, state.originalValue],
+			next: [key, value]
+		} as DiffEntry;
+		diffMap.set(state.originalKey as string, m.length);
+		return m.concat(de);
+	}, [] as Diff);
 }
 
 export function rebaseData(data: Data, base: [string, string][]): Data {
@@ -614,19 +606,16 @@ export function rebaseData(data: Data, base: [string, string][]): Data {
 			return [key, value, state] as Entry;
 		})
 		.concat(
-			base.reduce(
-				(m: Entry[], [key, value]: [string, string]) => {
-					// append new entries from base
-					if (processedKeys.has(key)) return m;
-					nextData.length++;
-					const index = m.length + nextData._entries.length;
-					nextData._indices.add(index);
-					nextData._indicesMap.set(key, index);
-					m.push([key, value, { originalKey: key, originalValue: value }]);
-					return m;
-				},
-				[] as Entry[]
-			)
+			base.reduce((m: Entry[], [key, value]: [string, string]) => {
+				// append new entries from base
+				if (processedKeys.has(key)) return m;
+				nextData.length++;
+				const index = m.length + nextData._entries.length;
+				nextData._indices.add(index);
+				nextData._indicesMap.set(key, index);
+				m.push([key, value, { originalKey: key, originalValue: value }]);
+				return m;
+			}, [] as Entry[])
 		);
 	nextData.hasChanges = nextData._changedIndices.size > 0;
 	return nextData;

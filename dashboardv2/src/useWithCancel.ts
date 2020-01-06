@@ -17,17 +17,14 @@ export default function useWithCancel() {
 		}),
 		[cancelFns]
 	);
-	React.useEffect(
-		() => {
-			// automatically call cancel fns on unmount
-			return () => {
-				for (let entry of cancelFns.entries()) {
-					const [, fn] = entry;
-					fn();
-				}
-			};
-		},
-		[cancelFns]
-	);
+	React.useEffect(() => {
+		// automatically call cancel fns on unmount
+		return () => {
+			for (let entry of cancelFns.entries()) {
+				const [, fn] = entry;
+				fn();
+			}
+		};
+	}, [cancelFns]);
 	return ref;
 }

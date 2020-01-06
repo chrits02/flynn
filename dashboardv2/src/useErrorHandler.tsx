@@ -96,18 +96,15 @@ export default function useErrorHandler(..._opts: ErrorHandlerOption[]): ErrorHa
 	const [opts] = React.useState(new Set(_opts));
 	const fn = React.useMemo(() => handleErrorFactory(), []);
 	const key = fn.key;
-	React.useEffect(
-		() => {
-			if (opts.has(ErrorHandlerOption.PERSIST_AFTER_UNMOUNT)) return;
-			// cancel all errors for component on unmount
-			return () => {
-				errors.delete(key);
-				for (let fn of callbacks) {
-					fn();
-				}
-			};
-		},
-		[key, opts]
-	);
+	React.useEffect(() => {
+		if (opts.has(ErrorHandlerOption.PERSIST_AFTER_UNMOUNT)) return;
+		// cancel all errors for component on unmount
+		return () => {
+			errors.delete(key);
+			for (let fn of callbacks) {
+				fn();
+			}
+		};
+	}, [key, opts]);
 	return fn;
 }

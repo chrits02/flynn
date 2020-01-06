@@ -422,13 +422,13 @@ function memoizedStream<T>(
 		on: (typ: string, handler: Function): ResponseStream<T> => {
 			switch (typ) {
 				case 'data':
-					dataCallbacks.push(handler as ((message: T) => void));
+					dataCallbacks.push(handler as (message: T) => void);
 					break;
 				case 'end':
-					stream.on('end', handler as ((status?: Status) => void));
+					stream.on('end', handler as (status?: Status) => void);
 					break;
 				case 'status':
-					stream.on('status', handler as ((status: Status) => void));
+					stream.on('status', handler as (status: Status) => void);
 					break;
 				default:
 			}

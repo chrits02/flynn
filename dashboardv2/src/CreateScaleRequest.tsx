@@ -207,27 +207,21 @@ export default function CreateScaleRequestComponent(props: Props) {
 	const dispatch = useMergeDispatch(localDispatch, callerDispatch);
 
 	// expose props.nextScale to state reducer
-	React.useEffect(
-		() => {
-			dispatch({ type: ActionType.SET_NEXT_SCALE, scale: nextScale });
-		},
-		[nextScale, dispatch]
-	);
+	React.useEffect(() => {
+		dispatch({ type: ActionType.SET_NEXT_SCALE, scale: nextScale });
+	}, [nextScale, dispatch]);
 
 	useAppReleaseWithDispatch(appName, dispatch);
 	useAppScaleWithDispatch(appName, dispatch);
 
 	const isLoading = scaleLoading || releaseLoading;
 
-	React.useEffect(
-		() => {
-			const error = scaleError || releaseError;
-			if (error) {
-				dispatch({ type: ActionType.SET_ERROR, error });
-			}
-		},
-		[scaleError, releaseError, dispatch]
-	);
+	React.useEffect(() => {
+		const error = scaleError || releaseError;
+		if (error) {
+			dispatch({ type: ActionType.SET_ERROR, error });
+		}
+	}, [scaleError, releaseError, dispatch]);
 
 	function handleSubmit(e: React.SyntheticEvent) {
 		e.preventDefault();
@@ -240,10 +234,16 @@ export default function CreateScaleRequestComponent(props: Props) {
 		protoMapReplace(req.getTagsMap(), nextScale.getTagsMap());
 		const cancel = client.createScale(req, (scaleReq: ScaleRequest, error: Error | null) => {
 			if (error) {
-				dispatch([{ type: ActionType.SET_ERROR, error }, { type: ActionType.SET_CREATING, creating: false }]);
+				dispatch([
+					{ type: ActionType.SET_ERROR, error },
+					{ type: ActionType.SET_CREATING, creating: false }
+				]);
 				return;
 			}
-			dispatch([{ type: ActionType.SET_CREATING, creating: false }, { type: ActionType.CREATED, scale: scaleReq }]);
+			dispatch([
+				{ type: ActionType.SET_CREATING, creating: false },
+				{ type: ActionType.CREATED, scale: scaleReq }
+			]);
 		});
 		withCancel.set(`createScale(${req.getParent()})`, cancel);
 	}

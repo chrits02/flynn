@@ -128,25 +128,19 @@ function MetadataEditor(props: Props) {
 	const withCancel = useWithCancel();
 	const handleError = useErrorHandler();
 
-	React.useEffect(
-		() => {
-			if (!appError) return;
-			handleError(appError);
-		},
-		[appError, handleError]
-	);
+	React.useEffect(() => {
+		if (!appError) return;
+		handleError(appError);
+	}, [appError, handleError]);
 
 	const [enableNavProtection, disableNavProtection] = useNavProtection();
-	React.useEffect(
-		() => {
-			if (data && data.hasChanges) {
-				enableNavProtection();
-			} else {
-				disableNavProtection();
-			}
-		},
-		[data, disableNavProtection, enableNavProtection]
-	);
+	React.useEffect(() => {
+		if (data && data.hasChanges) {
+			enableNavProtection();
+		} else {
+			disableNavProtection();
+		}
+	}, [data, disableNavProtection, enableNavProtection]);
 
 	React.useEffect(
 		() => {

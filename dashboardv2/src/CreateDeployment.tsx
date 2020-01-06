@@ -186,21 +186,15 @@ export default function CreateDeployment(props: Props) {
 	useAppReleaseWithDispatch(props.appName, dispatch);
 	useAppScaleWithDispatch(props.appName, dispatch);
 	useReleaseWithDispatch(props.releaseName || '', dispatch);
-	React.useEffect(
-		() => {
-			const error = currentReleaseError || nextReleaseError || currentScaleError;
-			if (error) {
-				dispatch({ type: ActionType.SET_ERROR, error });
-			}
-		},
-		[currentReleaseError, nextReleaseError, currentScaleError, dispatch]
-	);
-	const isLoading = React.useMemo(
-		() => {
-			return currentReleaseLoading || nextReleaseLoading || currentScaleLoading;
-		},
-		[currentReleaseLoading, nextReleaseLoading, currentScaleLoading]
-	);
+	React.useEffect(() => {
+		const error = currentReleaseError || nextReleaseError || currentScaleError;
+		if (error) {
+			dispatch({ type: ActionType.SET_ERROR, error });
+		}
+	}, [currentReleaseError, nextReleaseError, currentScaleError, dispatch]);
+	const isLoading = React.useMemo(() => {
+		return currentReleaseLoading || nextReleaseLoading || currentScaleLoading;
+	}, [currentReleaseLoading, nextReleaseLoading, currentScaleLoading]);
 
 	const withCancel = useWithCancel();
 

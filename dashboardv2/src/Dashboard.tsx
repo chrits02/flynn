@@ -40,12 +40,9 @@ function DashboardInner() {
 	const location = useLocation();
 	const currentPath = React.useMemo(() => location.pathname || '', [location.pathname]);
 	const [appName, setAppName] = React.useState<string>(appNameFromPath(currentPath));
-	React.useEffect(
-		() => {
-			setAppName(appNameFromPath(currentPath));
-		},
-		[currentPath]
-	);
+	React.useEffect(() => {
+		setAppName(appNameFromPath(currentPath));
+	}, [currentPath]);
 	const client = useClient();
 	const withCancel = useWithCancel();
 	const [authenticated, setAuthenticated] = React.useState(Config.isAuthenticated());

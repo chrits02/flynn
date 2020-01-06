@@ -13,7 +13,8 @@ import KeyValueEditor, {
 	Action as KVEditorAction,
 	ActionType as KVEditorActionType,
 	getEntries,
-	buildData
+	buildData,
+	rebaseData
 } from './KeyValueEditor';
 import protoMapDiff, { applyProtoMapDiff } from './util/protoMapDiff';
 import protoMapReplace from './util/protoMapReplace';
@@ -22,7 +23,14 @@ import useErrorHandler from './useErrorHandler';
 import { Release } from './generated/controller_pb';
 import RightOverlay from './RightOverlay';
 import { isNotFoundError } from './client';
-import useAppRelease from './useAppRelease';
+import {
+	useAppReleaseWithDispatch,
+	ActionType as AppReleaseActionType,
+	Action as AppReleaseAction,
+	State as AppReleaseState,
+	initialState as initialAppReleaseState,
+	reducer as appReleaseReducer
+} from './useAppRelease';
 import useNavProtection from './useNavProtection';
 
 interface Props {
@@ -32,12 +40,16 @@ interface Props {
 interface State {
 	data: Data;
 	isDeploying: boolean;
+	currentReleaseState: AppReleaseState;
+	newRelease: Release;
 }
 
 function initialState(props: Props): State {
 	return {
 		data: buildData([]),
-		isDeploying: false
+		isDeploying: false,
+		currentReleaseState: initialAppReleaseState(),
+		newRelease: new Release()
 	};
 }
 
@@ -55,13 +67,13 @@ interface DeployDismissAction {
 	type: ActionType.DEPLOY_DISMISS;
 }
 
-type Action = InitDataAction | DeployDismissAction | KVEditorAction | CreateDeploymentAction;
+type Action = InitDataAction | DeployDismissAction | KVEditorAction | CreateDeploymentAction | AppReleaseAction;
 
 function reducer(prevState: State, actions: Action | Action[]): State {
 	if (!Array.isArray(actions)) {
 		actions = [actions];
 	}
-	return actions.reduce((prevState: State, action: Action) => {
+	const nextState = actions.reduce((prevState: State, action: Action) => {
 		const nextState = Object.assign({}, prevState);
 		switch (action.type) {
 			case ActionType.INIT_DATA:
@@ -84,7 +96,6 @@ function reducer(prevState: State, actions: Action | Action[]): State {
 
 			case CreateDeploymentActionType.CREATED:
 				nextState.isDeploying = false;
-				nextState.data = buildData([]);
 				return nextState;
 
 			default:
@@ -93,63 +104,94 @@ function reducer(prevState: State, actions: Action | Action[]): State {
 					return nextState;
 				}
 
+				if (isActionType<AppReleaseAction>(AppReleaseActionType, action)) {
+					nextState.currentReleaseState = appReleaseReducer(prevState.currentReleaseState, action);
+					return nextState;
+				}
+
 				return prevState;
 		}
 	}, prevState);
+
+	if (nextState === prevState) return prevState;
+
+	// handle app not having a release
+	(() => {
+		const {
+			currentReleaseState: { release, loading, error }
+		} = nextState;
+		const {
+			currentReleaseState: { release: prevRelease, loading: prevLoading, error: prevError }
+		} = prevState;
+		if (release === prevRelease && loading === prevLoading && error === prevError) return;
+		if (!release && !loading) {
+			nextState.currentReleaseState.release = new Release();
+		}
+	})();
+
+	// newRelease is used to create a deployment
+	(() => {
+		const {
+			currentReleaseState: { release },
+			data
+		} = nextState;
+		if (!release) return;
+		if (release === prevState.currentReleaseState.release && data === prevState.data) return;
+
+		const diff = data ? protoMapDiff(release.getEnvMap(), new jspb.Map(getEntries(data))) : [];
+		const newRelease = new Release();
+		newRelease.setArtifactsList(release.getArtifactsList());
+		protoMapReplace(newRelease.getLabelsMap(), release.getLabelsMap());
+		protoMapReplace(newRelease.getProcessesMap(), release.getProcessesMap());
+		protoMapReplace(newRelease.getEnvMap(), applyProtoMapDiff(release.getEnvMap(), diff));
+		nextState.newRelease = newRelease;
+	})();
+
+	// maintain any non-conflicting changes made when new release arrives
+	(() => {
+		const {
+			currentReleaseState: { release },
+			data
+		} = nextState;
+		if (!release) return;
+		if (release === prevState.currentReleaseState.release) return;
+		nextState.data = rebaseData(data, release.getEnvMap().toArray());
+	})();
+
+	return nextState;
 }
 
 export default function EnvEditor(props: Props) {
 	const { appName } = props;
 	const handleError = useErrorHandler();
-	// Stream app release
-	const { release: currentRelease, loading: releaseIsLoading, error: releaseError } = useAppRelease(appName);
-	// handle app not having a release (useMemo so it uses the same value over
-	// multiple renders so as not to over-trigger hooks depending on `release`)
-	const initialRelease = React.useMemo(() => new Release(), []);
-	const release = currentRelease || initialRelease;
 
-	const [{ data, isDeploying }, dispatch] = React.useReducer(reducer, initialState(props));
+	const [
+		{
+			data,
+			isDeploying,
+			currentReleaseState: { release, loading: releaseIsLoading, error: releaseError },
+			newRelease
+		},
+		dispatch
+	] = React.useReducer(reducer, initialState(props));
+	// Stream app release
+	useAppReleaseWithDispatch(appName, dispatch);
 
 	const [enableNavProtection, disableNavProtection] = useNavProtection();
-	React.useEffect(
-		() => {
-			if (data && data.hasChanges) {
-				enableNavProtection();
-			} else {
-				disableNavProtection();
-			}
-		},
-		[data, disableNavProtection, enableNavProtection]
-	);
+	React.useEffect(() => {
+		if (data && data.hasChanges) {
+			enableNavProtection();
+		} else {
+			disableNavProtection();
+		}
+	}, [data, disableNavProtection, enableNavProtection]);
 
-	// newRelease is used to create a deployment
-	const newRelease = React.useMemo(
-		() => {
-			if (!release) return new Release();
-			const diff = data ? protoMapDiff(release.getEnvMap(), new jspb.Map(getEntries(data))) : [];
-			const newRelease = new Release();
-			newRelease.setArtifactsList(release.getArtifactsList());
-			protoMapReplace(newRelease.getLabelsMap(), release.getLabelsMap());
-			protoMapReplace(newRelease.getProcessesMap(), release.getProcessesMap());
-			protoMapReplace(newRelease.getEnvMap(), applyProtoMapDiff(release.getEnvMap(), diff));
-			return newRelease;
-		},
-		[release, data]
-	);
-
-	React.useEffect(
-		() => {
-			// handle any non-404 errors (not all apps have a release yet)
-			if (releaseError && !isNotFoundError(releaseError)) {
-				return handleError(releaseError);
-			}
-
-			// maintain any non-conflicting changes made when new release arrives
-			if (!release || !release.getName()) return;
-			dispatch({ type: DataActionType.REBASE, base: release.getEnvMap().toArray() });
-		},
-		[handleError, release, releaseError]
-	);
+	React.useEffect(() => {
+		// handle any non-404 errors (not all apps have a release yet)
+		if (releaseError && !isNotFoundError(releaseError)) {
+			return handleError(releaseError);
+		}
+	}, [handleError, releaseError]);
 
 	const handleDeployDismiss = React.useCallback(() => {
 		dispatch({ type: ActionType.DEPLOY_DISMISS });
@@ -165,11 +207,11 @@ export default function EnvEditor(props: Props) {
 		<>
 			{isDeploying ? (
 				<RightOverlay onClose={handleDeployDismiss}>
-					<CreateDeployment appName={appName} newRelease={newRelease || new Release()} dispatch={dispatch} />
+					<CreateDeployment appName={appName} newRelease={newRelease} dispatch={dispatch} />
 				</RightOverlay>
 			) : null}
 			<KeyValueEditor
-				data={data || buildData(release.getEnvMap().toArray())}
+				data={data}
 				dispatch={dispatch}
 				keyPlaceholder="ENV key"
 				valuePlaceholder="ENV value"

@@ -129,8 +129,8 @@ function MetadataEditor(props: Props) {
 	const handleError = useErrorHandler();
 
 	React.useEffect(() => {
-		if (!appError) return;
-		handleError(appError);
+		if (!appError) return () => {};
+		return handleError(appError);
 	}, [appError, handleError]);
 
 	const [enableNavProtection, disableNavProtection] = useNavProtection();
@@ -185,15 +185,18 @@ function MetadataEditor(props: Props) {
 			app.setName(appName);
 			protoMapReplace(app.getLabelsMap(), new jspb.Map(getEntries(data as Data)));
 			dispatch({ type: ActionType.DEPLOY });
+			const cancelKey = `updateApp(${app.getName()})`;
+			withCancel.call(`${cancelKey}.error`);
 			const cancel = client.updateApp(app, (app: App, error: Error | null) => {
 				if (error) {
 					dispatch({ type: ActionType.DEPLOY_ERROR, error });
-					handleError(error);
+					const cancel = handleError(error);
+					withCancel.set(`${cancelKey}.error`, cancel);
 					return;
 				}
 				dispatch({ type: ActionType.DEPLOY_SUCCESS, data: buildData(app.getLabelsMap().toArray()) });
 			});
-			withCancel.set(`updateApp(${app.getName()}`, cancel);
+			withCancel.set(cancelKey, cancel);
 		},
 		[appName, withCancel, client, data, handleError]
 	);

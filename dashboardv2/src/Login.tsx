@@ -19,8 +19,10 @@ export default function Login({ onLoginSuccess }: Props) {
 		e.preventDefault();
 		const cancel = client.login(loginToken, (s, err) => {
 			if (err !== null) {
-				handleError(err);
+				const cancel = handleError(err);
+				withCancel.set('login.error', cancel);
 			} else {
+				withCancel.call('login.error');
 				onLoginSuccess();
 			}
 		});

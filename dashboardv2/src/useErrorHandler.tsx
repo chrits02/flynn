@@ -1,8 +1,10 @@
 import * as React from 'react';
 import Notification from './Notification';
 
+type CancelFunc = () => void;
+
 export interface ErrorHandler {
-	(error: Error): void;
+	(error: Error): CancelFunc;
 	key: Symbol;
 }
 
@@ -15,10 +17,6 @@ const callbacks = new Set<() => void>();
 
 const errors = new Map<Symbol, CancelableError[]>();
 
-export interface ErrorHandlerProps {
-	handleError: ErrorHandler;
-}
-
 export function registerCallback(h: () => void): () => void {
 	callbacks.add(h);
 	return () => {
@@ -26,7 +24,7 @@ export function registerCallback(h: () => void): () => void {
 	};
 }
 
-function handleError(error: Error, key: Symbol = Symbol('useErrorHandler key(undefined)')) {
+function handleError(error: Error, key: Symbol = Symbol('useErrorHandler key(undefined)')): CancelFunc {
 	const cancelableError = Object.assign(new Error(error.message), error, {
 		cancel: () => {
 			const arr = errors.get(key);
@@ -44,6 +42,7 @@ function handleError(error: Error, key: Symbol = Symbol('useErrorHandler key(und
 	for (let fn of callbacks) {
 		fn();
 	}
+	return cancelableError.cancel;
 }
 
 export function useErrors(): CancelableError[] {
@@ -77,34 +76,18 @@ export function DisplayErrors() {
 	);
 }
 
-export enum ErrorHandlerOption {
-	PERSIST_AFTER_UNMOUNT
-}
-
 let debugIndex = 0;
 export function handleErrorFactory(): ErrorHandler {
 	const key = Symbol(`useErrorHandler key(${debugIndex++})`);
 	return Object.assign(
 		(error: Error) => {
-			handleError(error, key);
+			return handleError(error, key);
 		},
 		{ key }
 	);
 }
 
-export default function useErrorHandler(..._opts: ErrorHandlerOption[]): ErrorHandler {
-	const [opts] = React.useState(new Set(_opts));
+export default function useErrorHandler(): ErrorHandler {
 	const fn = React.useMemo(() => handleErrorFactory(), []);
-	const key = fn.key;
-	React.useEffect(() => {
-		if (opts.has(ErrorHandlerOption.PERSIST_AFTER_UNMOUNT)) return;
-		// cancel all errors for component on unmount
-		return () => {
-			errors.delete(key);
-			for (let fn of callbacks) {
-				fn();
-			}
-		};
-	}, [key, opts]);
 	return fn;
 }

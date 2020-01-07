@@ -163,7 +163,6 @@ function reducer(prevState: State, actions: Action | Action[]): State {
 
 export default function EnvEditor(props: Props) {
 	const { appName } = props;
-	const handleError = useErrorHandler();
 
 	const [
 		{
@@ -186,11 +185,14 @@ export default function EnvEditor(props: Props) {
 		}
 	}, [data, disableNavProtection, enableNavProtection]);
 
+	const handleError = useErrorHandler();
 	React.useEffect(() => {
 		// handle any non-404 errors (not all apps have a release yet)
+		let cancel = () => {};
 		if (releaseError && !isNotFoundError(releaseError)) {
-			return handleError(releaseError);
+			cancel = handleError(releaseError);
 		}
+		return cancel;
 	}, [handleError, releaseError]);
 
 	const handleDeployDismiss = React.useCallback(() => {

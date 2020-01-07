@@ -625,9 +625,11 @@ function ReleaseHistory({ appName }: Props) {
 	const handleError = useErrorHandler();
 	React.useEffect(() => {
 		const error = appError || currentScaleError || releaseHistoryError || createDeploymentError;
+		let cancel = () => {};
 		if (error) {
-			handleError(error);
+			cancel = handleError(error);
 		}
+		return cancel;
 	}, [appError, currentScaleError, releaseHistoryError, createDeploymentError, handleError]);
 
 	useAppWithDispatch(appName, dispatch);

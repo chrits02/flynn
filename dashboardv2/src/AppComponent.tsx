@@ -15,7 +15,7 @@ import isActionType from './util/isActionType';
 import useRouter from './useRouter';
 import { NavProtectionContext, buildNavProtectionContext } from './useNavProtection';
 
-import { default as useErrorHandler, ErrorHandlerOption } from './useErrorHandler';
+import { default as useErrorHandler } from './useErrorHandler';
 import Notification from './Notification';
 import Loading from './Loading';
 import ExternalAnchor from './ExternalAnchor';
@@ -121,7 +121,7 @@ export interface Props {
  */
 export default function AppComponent(props: Props) {
 	const { name } = props;
-	const handleError = useErrorHandler(ErrorHandlerOption.PERSIST_AFTER_UNMOUNT);
+	const handleError = useErrorHandler();
 
 	// Stream app
 	const [
@@ -138,6 +138,7 @@ export default function AppComponent(props: Props) {
 	React.useEffect(
 		() => {
 			if (appError) {
+				// the error is intentionally not canceled
 				if (app && isNotFoundError(appError)) {
 					handleError(new Error(`"${app.getDisplayName()}" has been deleted!`));
 					history.push('/' + location.search);
@@ -146,9 +147,11 @@ export default function AppComponent(props: Props) {
 				}
 			}
 
+			let cancel = () => {};
 			if (formationEditorError) {
-				handleError(formationEditorError);
+				cancel = handleError(formationEditorError);
 			}
+			return cancel;
 		},
 		[appError, formationEditorError] // eslint-disable-line react-hooks/exhaustive-deps
 	);

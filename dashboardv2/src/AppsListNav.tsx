@@ -18,7 +18,6 @@ export interface Props {
 }
 
 export default function AppsListNav({ onNav }: Props) {
-	const handleError = useErrorHandler();
 	const { location, urlParams } = useRouter();
 	const excludeSystemAppsFilter = React.useMemo(() => excludeAppsWithLabels([['flynn-system-app', 'true']]), []);
 	const showSystemApps = urlParams.get('show-system-apps') === 'true';
@@ -27,10 +26,13 @@ export default function AppsListNav({ onNav }: Props) {
 		showSystemApps
 	]);
 	const { apps, nextPageToken, fetchNextPage, loading: isLoading, error: appsError } = useAppsList(appsListFilters);
+	const handleError = useErrorHandler();
 	React.useEffect(() => {
+		let cancel = () => {};
 		if (appsError) {
-			handleError(appsError);
+			cancel = handleError(appsError);
 		}
+		return cancel;
 	}, [appsError, handleError]);
 
 	// some query params are persistent, make sure they're passed along if present

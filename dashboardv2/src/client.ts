@@ -447,10 +447,21 @@ function retryStream<T>(init: () => ResponseStream<T>): ResponseStream<T> {
 	let retryTimeoutId: ReturnType<typeof setTimeout>;
 
 	let stream = init();
+	let hasResponse = false;
 	let handlers = new Map<'data' | 'status' | 'end', Function[]>();
 	const on = (typ: 'data' | 'status' | 'end', handler: Function): ResponseStream<T> => {
 		handlers.set(typ, (handlers.get(typ) || []).concat([handler]));
-		stream.on(typ as any, handler as any);
+		if (typ === 'data') {
+			stream.on(typ as any, handler as any);
+		} else {
+			stream.on(typ as any, () => {
+				// only call upstream 'status' and 'end' handlers when there is
+				// either a response or no more retries will occur
+				if (hasResponse || nRetries === maxRetires) {
+					handler.apply(undefined, arguments);
+				}
+			});
+		}
 		return stream;
 	};
 	const retryOnEnd = (status?: Status) => {
@@ -474,6 +485,9 @@ function retryStream<T>(init: () => ResponseStream<T>): ResponseStream<T> {
 			}
 		}
 	};
+	stream.on('data', () => {
+		hasResponse = true;
+	});
 	stream.on('end', retryOnEnd);
 
 	return {

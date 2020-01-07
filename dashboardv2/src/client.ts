@@ -454,11 +454,11 @@ function retryStream<T>(init: () => ResponseStream<T>): ResponseStream<T> {
 		if (typ === 'data') {
 			stream.on(typ as any, handler as any);
 		} else {
-			stream.on(typ as any, () => {
+			stream.on(typ as any, (...args) => {
 				// only call upstream 'status' and 'end' handlers when there is
 				// either a response or no more retries will occur
 				if (hasResponse || nRetries === maxRetires) {
-					handler.apply(undefined, arguments);
+					handler.apply(undefined, args);
 				}
 			});
 		}

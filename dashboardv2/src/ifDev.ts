@@ -1,5 +1,6 @@
-export default function ifDev(fn: () => void) {
+export default function ifDev<T>(fn: () => T | undefined) {
 	if (process.env.NODE_ENV !== 'production') {
-		fn();
+		return fn();
 	}
+	return undefined;
 }

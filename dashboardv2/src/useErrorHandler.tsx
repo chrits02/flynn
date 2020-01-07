@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { grpc } from '@improbable-eng/grpc-web';
 import Notification from './Notification';
 
 type CancelFunc = () => void;
@@ -25,6 +26,12 @@ export function registerCallback(h: () => void): () => void {
 }
 
 function handleError(error: Error, key: Symbol = Symbol('useErrorHandler key(undefined)')): CancelFunc {
+	if ((error as any).code === grpc.Code.Unknown) {
+		if (console && typeof console.error === 'function') {
+			console.error(error);
+		}
+		return () => {};
+	}
 	const cancelableError = Object.assign(new Error(error.message), error, {
 		cancel: () => {
 			const arr = errors.get(key);

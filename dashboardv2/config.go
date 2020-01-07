@@ -56,8 +56,10 @@ func MustConfig() *Config {
 	}
 	conf.SessionStore = sessions.NewCookieStore([]byte(sessionSecret))
 	conf.SessionStore.Options.Secure = true
-	if d := os.Getenv("DEFAULT_ROUTE_DOMAIN"); d != "" {
+	if d := os.Getenv("SESSION_DOMAIN"); d != "" {
 		conf.SessionStore.Options.Domain = d
+	} else {
+		log.Fatal("SESSION_DOMAIN is required!")
 	}
 
 	conf.PublicConfig = map[string]string{

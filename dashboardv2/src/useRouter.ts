@@ -71,7 +71,7 @@ export default function useRouter<TParams = {}>(): UseRouterObejct<TParams> {
 						break;
 					}
 				}
-				protectedParamsChanged = protectedParamsChanged || !hasParam;
+				protectedParamsChanged = protectedParamsChanged || hasParam;
 			}
 
 			if (

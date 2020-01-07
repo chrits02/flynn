@@ -754,6 +754,7 @@ class _Client implements Client {
 		});
 		stream.on('end', (status?: Status) => {
 			if (hasData) return;
+			// make sure cb is called
 			cb(new StreamDeploymentsResponse(), null);
 		});
 		if (lastResponse) {

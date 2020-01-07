@@ -339,13 +339,33 @@ interface Cancellable {
 	cancel(): void;
 }
 
-function buildCancelFunc(req: Cancellable): CancelFunc {
+enum BuildCancelFuncOpts {
+	CONFIRM_CANCEL
+}
+
+function buildCancelFunc(req: Cancellable, ..._opts: BuildCancelFuncOpts[]): CancelFunc {
+	const opts = new Set(_opts);
 	let cancelled = false;
-	return () => {
+	function cancel() {
 		if (cancelled) return;
+		if (opts.has(BuildCancelFuncOpts.CONFIRM_CANCEL)) {
+			if (
+				!window.confirm(
+					'This page is asking you to confirm that you want to cancel a network request - data you have entered may not be saved.'
+				)
+			) {
+				return;
+			}
+		}
 		cancelled = true;
+		window.removeEventListener('beforeunload', handleBeforeUnload);
 		req.cancel();
-	};
+	}
+	function handleBeforeUnload() {
+		cancel();
+	}
+	window.addEventListener('beforeunload', handleBeforeUnload);
+	return cancel;
 }
 
 function convertServiceError(error: ServiceError): ErrorWithCode {
@@ -834,7 +854,8 @@ class _Client implements Client {
 				} else {
 					cb(new App(), UnknownError);
 				}
-			})
+			}),
+			BuildCancelFuncOpts.CONFIRM_CANCEL
 		);
 	}
 
@@ -848,7 +869,8 @@ class _Client implements Client {
 				} else {
 					cb(new ScaleRequest(), UnknownError);
 				}
-			})
+			}),
+			BuildCancelFuncOpts.CONFIRM_CANCEL
 		);
 	}
 
@@ -865,7 +887,8 @@ class _Client implements Client {
 				} else {
 					cb(new Release(), UnknownError);
 				}
-			})
+			}),
+			BuildCancelFuncOpts.CONFIRM_CANCEL
 		);
 	}
 
@@ -885,7 +908,7 @@ class _Client implements Client {
 			}
 		});
 		stream.on('end', () => {});
-		return buildCancelFunc(stream);
+		return buildCancelFunc(stream, BuildCancelFuncOpts.CONFIRM_CANCEL);
 	}
 
 	private metadata(): grpc.Metadata {

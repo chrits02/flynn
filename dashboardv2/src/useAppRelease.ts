@@ -75,8 +75,6 @@ export function useAppReleaseWithDispatch(appName: string, callerDispatch: Dispa
 	const [, localDispatch] = React.useReducer(reducer, initialState());
 	const dispatch = useMergeDispatch(localDispatch, callerDispatch, false);
 	React.useEffect(() => {
-		let unary = true;
-		let streamCancel = () => {};
 		const callback = (res: StreamDeploymentsResponse, error: Error | null) => {
 			if (error) {
 				dispatch([
@@ -101,28 +99,14 @@ export function useAppReleaseWithDispatch(appName: string, callerDispatch: Dispa
 					{ type: ActionType.SET_LOADING, loading: false }
 				]);
 			}
-
-			if (unary) {
-				unary = false;
-				streamCancel = client.streamDeployments(
-					callback,
-					setNameFilters(appName),
-					setDeploymentStatusFilters(DeploymentStatus.COMPLETE),
-					setPageSize(1),
-					setStreamCreates(),
-					setStreamUpdates()
-				);
-			}
 		};
-		const cancel = () => {
-			unaryCancel();
-			streamCancel();
-		};
-		const unaryCancel = client.streamDeployments(
+		const cancel = client.streamDeployments(
 			callback,
 			setNameFilters(appName),
 			setDeploymentStatusFilters(DeploymentStatus.COMPLETE),
-			setPageSize(1)
+			setPageSize(1),
+			setStreamCreates(),
+			setStreamUpdates()
 		);
 		return cancel;
 	}, [appName, client, dispatch]);

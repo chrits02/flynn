@@ -241,9 +241,13 @@ export default function CreateDeployment(props: Props) {
 			p = createDeployment(nextRelease, newScale);
 		}
 		p.then(() => {
-			dispatch([{ type: ActionType.SET_CREATING, creating: false }, { type: ActionType.CREATED }]);
+			queueMicrotask(() => {
+				dispatch([{ type: ActionType.SET_CREATING, creating: false }, { type: ActionType.CREATED }]);
+			});
 		}).catch((error: Error) => {
-			dispatch({ type: ActionType.SET_ERROR, error });
+			queueMicrotask(() => {
+				dispatch({ type: ActionType.SET_ERROR, error });
+			});
 		});
 	}
 

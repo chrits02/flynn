@@ -337,15 +337,19 @@ export function isNotFoundError(error: Error): boolean {
 
 interface Cancellable {
 	cancel(): void;
+	on(typ: 'end', handler: () => void): void;
 }
 
 enum BuildCancelFuncOpts {
 	CONFIRM_CANCEL
 }
 
-function buildCancelFunc(req: Cancellable, ..._opts: BuildCancelFuncOpts[]): CancelFunc {
+function buildCancelFunc<T>(req: Cancellable, ..._opts: BuildCancelFuncOpts[]): CancelFunc {
 	const opts = new Set(_opts);
 	let cancelled = false;
+	req.on('end', () => {
+		cancelled = true;
+	});
 	function cancel() {
 		if (cancelled) return;
 		if (opts.has(BuildCancelFuncOpts.CONFIRM_CANCEL)) {
@@ -845,31 +849,51 @@ class _Client implements Client {
 		// TODO(jvatic): implement update_mask to include only changed fields
 		const req = new UpdateAppRequest();
 		req.setApp(app);
+		const onEndCallbacks = new Set<() => void>();
 		return buildCancelFunc(
-			this._cc.updateApp(req, this.metadata(), (error: ServiceError | null, response: App | null) => {
-				if (response && error === null) {
-					cb(response, null);
-				} else if (error) {
-					cb(new App(), convertServiceError(error));
-				} else {
-					cb(new App(), UnknownError);
+			Object.assign(
+				this._cc.updateApp(req, this.metadata(), (error: ServiceError | null, response: App | null) => {
+					onEndCallbacks.forEach((cb) => cb());
+
+					if (response && error === null) {
+						cb(response, null);
+					} else if (error) {
+						cb(new App(), convertServiceError(error));
+					} else {
+						cb(new App(), UnknownError);
+					}
+				}),
+				{
+					on: (typ: 'end', cb: () => void) => {
+						onEndCallbacks.add(cb);
+					}
 				}
-			}),
+			),
 			BuildCancelFuncOpts.CONFIRM_CANCEL
 		);
 	}
 
 	public createScale(req: CreateScaleRequest, cb: CreateScaleCallback): CancelFunc {
+		const onEndCallbacks = new Set<() => void>();
 		return buildCancelFunc(
-			this._cc.createScale(req, this.metadata(), (error: ServiceError | null, response: ScaleRequest | null) => {
-				if (response && error === null) {
-					cb(response, null);
-				} else if (error) {
-					cb(new ScaleRequest(), convertServiceError(error));
-				} else {
-					cb(new ScaleRequest(), UnknownError);
+			Object.assign(
+				this._cc.createScale(req, this.metadata(), (error: ServiceError | null, response: ScaleRequest | null) => {
+					onEndCallbacks.forEach((cb) => cb());
+
+					if (response && error === null) {
+						cb(response, null);
+					} else if (error) {
+						cb(new ScaleRequest(), convertServiceError(error));
+					} else {
+						cb(new ScaleRequest(), UnknownError);
+					}
+				}),
+				{
+					on: (typ: 'end', cb: () => void) => {
+						onEndCallbacks.add(cb);
+					}
 				}
-			}),
+			),
 			BuildCancelFuncOpts.CONFIRM_CANCEL
 		);
 	}
@@ -878,16 +902,26 @@ class _Client implements Client {
 		const req = new CreateReleaseRequest();
 		req.setParent(parentName);
 		req.setRelease(release);
+		const onEndCallbacks = new Set<() => void>();
 		return buildCancelFunc(
-			this._cc.createRelease(req, this.metadata(), (error: ServiceError | null, response: Release | null) => {
-				if (response && error === null) {
-					cb(response, null);
-				} else if (error) {
-					cb(new Release(), convertServiceError(error));
-				} else {
-					cb(new Release(), UnknownError);
+			Object.assign(
+				this._cc.createRelease(req, this.metadata(), (error: ServiceError | null, response: Release | null) => {
+					onEndCallbacks.forEach((cb) => cb());
+
+					if (response && error === null) {
+						cb(response, null);
+					} else if (error) {
+						cb(new Release(), convertServiceError(error));
+					} else {
+						cb(new Release(), UnknownError);
+					}
+				}),
+				{
+					on: (typ: 'end', cb: () => void) => {
+						onEndCallbacks.add(cb);
+					}
 				}
-			}),
+			),
 			BuildCancelFuncOpts.CONFIRM_CANCEL
 		);
 	}

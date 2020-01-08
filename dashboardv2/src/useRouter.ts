@@ -49,6 +49,7 @@ export default function useRouter<TParams = {}>(): UseRouterObejct<TParams> {
 			let path = '' as string;
 			let pathname = '' as string;
 			let nextUrlParams;
+			const prevUrlParams = urlParams;
 			if (typeof pathOrLocation === 'string') {
 				passState = true;
 				path = pathOrLocation;
@@ -62,16 +63,12 @@ export default function useRouter<TParams = {}>(): UseRouterObejct<TParams> {
 
 			let protectedParamsChanged = false;
 			for (let [pk, pv] of getProtectedParams()) {
-				if (!urlParams.has(pk)) continue;
-
-				let hasParam = false;
-				for (let [k, v] of nextUrlParams) {
-					if (k === pk && v === pv) {
-						hasParam = true;
-						break;
-					}
+				if (nextUrlParams.getAll(pk).includes(pv)) {
+					protectedParamsChanged = !prevUrlParams.getAll(pk).includes(pv);
+				} else if (prevUrlParams.getAll(pk).includes(pv)) {
+					protectedParamsChanged = true;
 				}
-				protectedParamsChanged = protectedParamsChanged || hasParam;
+				if (protectedParamsChanged) break;
 			}
 
 			if (
